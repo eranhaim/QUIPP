@@ -1,0 +1,90 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── QUIPP Issue 05 — 4 Colours Only ── */
+    --color-white: 0 0% 100%;            /* #ffffff */
+    --color-almost-black: 15 5% 13%;     /* #221f20 */
+    --color-lime: 73 100% 48%;           /* #d1f300 */
+    --color-purple: 263 60% 26%;         /* #36186b */
+
+    /* ── Semantic Tokens ── */
+    --background: var(--color-white);
+    --foreground: var(--color-almost-black);
+
+    --card: var(--color-white);
+    --card-foreground: var(--color-almost-black);
+
+    --popover: var(--color-white);
+    --popover-foreground: var(--color-almost-black);
+
+    --primary: var(--color-lime);
+    --primary-foreground: var(--color-almost-black);
+
+    --secondary: var(--color-purple);
+    --secondary-foreground: var(--color-white);
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 15 3% 46%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: var(--color-almost-black);
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: var(--color-white);
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: var(--color-lime);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: var(--color-almost-black);
+    --sidebar-foreground: var(--color-white);
+    --sidebar-primary: var(--color-lime);
+    --sidebar-primary-foreground: var(--color-almost-black);
+    --sidebar-accent: var(--color-purple);
+    --sidebar-accent-foreground: var(--color-white);
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: var(--color-lime);
+
+    --chart-1: var(--color-lime);
+    --chart-2: var(--color-purple);
+    --chart-3: 220 100% 50%;
+    --chart-4: 263 84% 58%;
+    --chart-5: 0 84% 60%;
+
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.06);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.06);
+    --shadow-sm: 0 2px 6px 0px hsl(0 0% 0% / 0.08);
+    --shadow-md: 0 4px 16px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.12);
+    --shadow-xl: 0 12px 32px hsl(0 0% 0% / 0.15);
+    --shadow-2xl: 0 16px 48px hsl(0 0% 0% / 0.2);
+    --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.08);
+
+    --spacing: 0.25rem;
+
+    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+  }
+}

@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: quipp_backend
+    restart: unless-stopped
+    env_file:
+      - ../backend/.env
+    environment:
+      NODE_ENV: production
+    expose:
+      - "4000"
+    networks:
+      - quipp
+
+  web:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: quipp_web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - quipp
+
+networks:
+  quipp:
+    driver: bridge

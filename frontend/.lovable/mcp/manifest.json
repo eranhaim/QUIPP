@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://rieuadsoirftlvzzenmd.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "alma-passport",
+      "version": "0.1.0",
+      "title": "Alma Passport"
+    },
+    "tools": [
+      {
+        "name": "get_my_passport",
+        "title": "Get my passport",
+        "description": "Get the signed-in worker's QUIPP passport profile: name, role, specialty, location, experience and tech proficiency score.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_credentials",
+        "title": "List my credentials",
+        "description": "List the credentials (certifications) the signed-in worker has earned, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of credentials to return (1-100, default 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_courses",
+        "title": "Search training courses",
+        "description": "Search the QUIPP Academy catalog of published equipment training courses by keyword, tier or technology focus.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Keyword matched against course title, equipment name and description."
+            },
+            "tier": {
+              "type": "string",
+              "description": "Filter by course tier, e.g. IN, AD, MA."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum courses to return (1-50, default 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "verify_credential",
+        "title": "Verify a credential",
+        "description": "Verify a QUIPP credential by its public verification ID and return its issuance details.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "verification_id": {
+              "type": "string",
+              "description": "The public verification ID printed on the credential."
+            }
+          },
+          "required": [
+            "verification_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

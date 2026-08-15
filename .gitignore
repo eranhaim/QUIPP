@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.env
+.env.local
+*.log
+.DS_Store
+.vscode
+
+# NEVER commit SSH keys or PEM files
+*.pem
+*.key
+key.pem
