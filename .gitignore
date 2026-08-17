@@ -7,6 +7,9 @@ build
 .DS_Store
 .vscode
 
+# Locally installed agent skills — recreate with `npx skills sync`
+.agents/
+
 # NEVER commit SSH keys or PEM files
 *.pem
 *.key

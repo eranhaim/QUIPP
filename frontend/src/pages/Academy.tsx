@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Layout from '@/components/Layout';
+import AppShell from '@/components/AppShell';
 import { academyCourses, tagPillStyles, type TagName, type AcademyCourse } from '@/data/academyCourses';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Clock, ArrowRight, AlertTriangle } from 'lucide-react';
@@ -45,7 +45,7 @@ const Academy = () => {
     : coursesByCategory.filter(s => s.category === filter);
 
   return (
-    <Layout>
+    <AppShell>
       {/* ──── HERO (Purple) ──── */}
       <section className="py-16 md:py-24" style={{ background: '#36186b' }}>
         <div className="max-w-[1200px] mx-auto px-5 text-center">
@@ -333,7 +333,7 @@ const Academy = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Layout>
+    </AppShell>
   );
 };
 

@@ -46,7 +46,7 @@ const Onboarding = () => {
 
   const finish = () => {
     // TODO(M3): persist role + equipment to backend profile
-    navigate('/');
+    navigate('/home', { replace: true });
   };
 
   const name = user?.firstName ?? 'there';

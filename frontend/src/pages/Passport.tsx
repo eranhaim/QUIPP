@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { Share2, Copy } from 'lucide-react';
-import Layout from '@/components/Layout';
+import AuthAwareShell from '@/components/AuthAwareShell';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import TechScoreRing from '@/components/TechScoreRing';
 import CredentialPatch from '@/components/CredentialPatch';
@@ -39,7 +39,7 @@ const Passport = () => {
   };
 
   return (
-    <Layout>
+    <AuthAwareShell>
       {/* ──── SECTION 1: IDENTITY HERO (Purple) ──── */}
       <section className="py-12 md:py-20" style={{ background: '#36186b' }}>
         <motion.div {...fade()} className="max-w-[680px] mx-auto px-5 text-center">
@@ -246,7 +246,7 @@ const Passport = () => {
           })()}
         </DialogContent>
       </Dialog>
-    </Layout>
+    </AuthAwareShell>
   );
 };
 

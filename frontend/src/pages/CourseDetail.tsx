@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import Layout from '@/components/Layout';
+import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { sampleCourses, tierConfig, techTagConfig } from '@/data/mockData';
 import combiOvenImg from '@/assets/combi-oven.jpg';
@@ -15,7 +15,7 @@ const CourseDetail = () => {
   const course = sampleCourses.find(c => c.slug === slug);
 
   if (!course) {
-    return <Layout><div className="max-w-[680px] mx-auto px-5 py-20 text-center"><h1 className="text-2xl font-bold font-display">Course not found</h1></div></Layout>;
+    return <AppShell><div className="max-w-[680px] mx-auto px-5 py-20 text-center"><h1 className="text-2xl font-bold font-display">Course not found</h1></div></AppShell>;
   }
 
   const tier = tierConfig[course.tier];
@@ -24,7 +24,7 @@ const CourseDetail = () => {
   const knowledgePart = course.parts.find(p => p.type === 'knowledge');
 
   return (
-    <Layout>
+    <AppShell>
       <section className="pt-16 md:pt-28 pb-32 md:pb-44">
         <div className="max-w-[680px] mx-auto px-5">
           <p className="text-xs text-muted-foreground mb-8">
@@ -105,7 +105,7 @@ const CourseDetail = () => {
           </div>
         </div>
       </section>
-    </Layout>
+    </AppShell>
   );
 };
 

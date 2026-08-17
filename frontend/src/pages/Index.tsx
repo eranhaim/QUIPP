@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { sampleArticles } from '@/data/mockData';
+import { useAuth } from '@/hooks/useAuth';
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -27,8 +28,13 @@ const transformPaths = [
 ];
 
 const Index = () => {
+  const { user, loading } = useAuth();
   const featured = sampleArticles[0];
   const updates = sampleArticles.slice(1, 5);
+
+  if (!loading && user) {
+    return <Navigate to="/home" replace />;
+  }
 
   return (
     <Layout>
@@ -43,7 +49,7 @@ const Index = () => {
             Earn credentials. Build your Passport. Get ahead.
           </p>
           <Button size="lg" className="rounded-full h-14 px-10 text-base font-bold" asChild>
-            <Link to="/academy">Get quipp'd</Link>
+            <Link to="/signup">Get quipp'd</Link>
           </Button>
         </motion.div>
       </section>
@@ -116,7 +122,7 @@ const Index = () => {
           <h2 className="text-3xl md:text-5xl font-extrabold font-display text-white mb-3 uppercase">GET <span className="text-primary">QUIPP'D</span></h2>
           <p className="text-base text-white/60 mb-10 max-w-[400px] mx-auto">Your skills. Your story. Your future.</p>
           <Button size="lg" className="rounded-full h-14 px-10 font-bold text-base" asChild>
-            <Link to="/academy">Start Free →</Link>
+            <Link to="/signup">Start Free →</Link>
           </Button>
         </motion.div>
       </section>

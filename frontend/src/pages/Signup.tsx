@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -9,9 +9,11 @@ const Signup = () => {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { register, user, loading } = useAuth();
   const navigate = useNavigate();
+
+  if (!loading && user) return <Navigate to="/home" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,15 +25,15 @@ const Signup = () => {
       });
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     try {
       await register({ email, password, firstName: firstName.trim() || undefined });
-      navigate('/onboarding');
+      navigate('/onboarding', { replace: true });
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong';
       toast({ title: 'Signup failed', description: message, variant: 'destructive' });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -85,8 +87,8 @@ const Signup = () => {
                 placeholder="At least 8 characters"
               />
             </div>
-            <Button className="w-full rounded-full h-[52px] font-bold" type="submit" disabled={loading}>
-              {loading ? 'Creating…' : 'Start →'}
+            <Button className="w-full rounded-full h-[52px] font-bold" type="submit" disabled={submitting}>
+              {submitting ? 'Creating…' : 'Start →'}
             </Button>
           </form>
 

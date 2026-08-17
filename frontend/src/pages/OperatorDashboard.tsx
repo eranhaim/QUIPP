@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Users, BookOpen, ClipboardList, FileDown, AlertTriangle, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import AppShell from '@/components/AppShell';
 
 // Mock operator data
 const teamMembers = [
@@ -33,7 +34,7 @@ const OperatorDashboard = () => {
   const notStarted = teamMembers.filter(m => m.completionRate === 0).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppShell>
       {/* Header */}
       <header className="bg-background border-b border-border">
         <div className="max-w-[1200px] mx-auto px-5 py-6">
@@ -218,7 +219,7 @@ const OperatorDashboard = () => {
           </div>
         )}
       </div>
-    </div>
+    </AppShell>
   );
 };
 

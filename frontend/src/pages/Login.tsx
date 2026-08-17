@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -8,25 +8,31 @@ import { ApiError } from '@/lib/api';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { login, user, loading } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const nextParam = params.get('next');
-  const next = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : '/';
+  const next = nextParam && /^\/(?!\/)/.test(nextParam) ? nextParam : '/home';
+
+  useEffect(() => {
+    if (!loading && user) navigate(next, { replace: true });
+  }, [user, loading, navigate, next]);
+
+  if (!loading && user) return <Navigate to={next} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) return;
-    setLoading(true);
+    setSubmitting(true);
     try {
       await login(email, password);
-      navigate(next);
+      navigate(next, { replace: true });
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Something went wrong';
       toast({ title: 'Login failed', description: message, variant: 'destructive' });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -66,8 +72,8 @@ const Login = () => {
                 placeholder="••••••••"
               />
             </div>
-            <Button className="w-full rounded-full h-[52px] font-bold" type="submit" disabled={loading}>
-              {loading ? 'Logging in…' : 'Go →'}
+            <Button className="w-full rounded-full h-[52px] font-bold" type="submit" disabled={submitting}>
+              {submitting ? 'Logging in…' : 'Go →'}
             </Button>
           </form>
 
