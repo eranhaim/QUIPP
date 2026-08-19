@@ -51,29 +51,37 @@ const Login = () => {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="text-xs font-medium text-card-foreground mb-1.5 block">Email</label>
+              <label htmlFor="login-email" className="text-xs font-medium text-card-foreground mb-1.5 block">
+                Email
+              </label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                required
                 className="w-full h-[52px] px-5 rounded-full border-2 border-border bg-background text-foreground text-base focus:outline-none focus:border-primary"
                 placeholder="your@email.com"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-card-foreground mb-1.5 block">Password</label>
+              <label htmlFor="login-password" className="text-xs font-medium text-card-foreground mb-1.5 block">
+                Password
+              </label>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                required
                 className="w-full h-[52px] px-5 rounded-full border-2 border-border bg-background text-foreground text-base focus:outline-none focus:border-primary"
                 placeholder="••••••••"
               />
             </div>
             <Button className="w-full rounded-full h-[52px] font-bold" type="submit" disabled={submitting}>
-              {submitting ? 'Logging in…' : 'Go →'}
+              {submitting ? 'Logging in…' : 'Log in →'}
             </Button>
           </form>
 

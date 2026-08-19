@@ -54,8 +54,11 @@ const Signup = () => {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="text-xs font-medium text-card-foreground mb-1.5 block">First name</label>
+              <label htmlFor="signup-first-name" className="text-xs font-medium text-card-foreground mb-1.5 block">
+                First name
+              </label>
               <input
+                id="signup-first-name"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -65,30 +68,38 @@ const Signup = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-card-foreground mb-1.5 block">Email</label>
+              <label htmlFor="signup-email" className="text-xs font-medium text-card-foreground mb-1.5 block">
+                Email
+              </label>
               <input
+                id="signup-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                required
                 className="w-full h-[52px] px-5 rounded-full border-2 border-border bg-background text-foreground text-base focus:outline-none focus:border-primary"
                 placeholder="your@email.com"
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-card-foreground mb-1.5 block">Password</label>
+              <label htmlFor="signup-password" className="text-xs font-medium text-card-foreground mb-1.5 block">
+                Password
+              </label>
               <input
+                id="signup-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
                 minLength={8}
+                required
                 className="w-full h-[52px] px-5 rounded-full border-2 border-border bg-background text-foreground text-base focus:outline-none focus:border-primary"
                 placeholder="At least 8 characters"
               />
             </div>
             <Button className="w-full rounded-full h-[52px] font-bold" type="submit" disabled={submitting}>
-              {submitting ? 'Creating…' : 'Start →'}
+              {submitting ? 'Creating…' : 'Sign up →'}
             </Button>
           </form>
 
