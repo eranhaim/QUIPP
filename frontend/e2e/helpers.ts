@@ -8,6 +8,10 @@ import path from 'node:path';
  * with a stable, human-readable name. Attaches the file to the test report.
  */
 export async function snap(page: Page, name: string, info: TestInfo) {
+  // Let framer-motion fade-ins settle so the screenshot captures the final,
+  // fully-opaque frame rather than a partially-animated one.
+  await page.waitForLoadState('networkidle').catch(() => undefined);
+  await page.waitForTimeout(1300);
   const dir = path.join(info.project.outputDir, 'screenshots');
   fs.mkdirSync(dir, { recursive: true });
   const safeProject = info.project.name.replace(/[^a-z0-9-]/gi, '_');
