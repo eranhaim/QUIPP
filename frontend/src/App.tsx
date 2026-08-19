@@ -8,12 +8,10 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Academy from "./pages/Academy";
-import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CoursePlayer from "./pages/CoursePlayer";
 import Passport from "./pages/Passport";
 import MyPassportRedirect from "./pages/MyPassportRedirect";
-import CredentialDisplay from "./pages/CredentialDisplay";
 import Verify from "./pages/Verify";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -37,7 +35,6 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/passport/:username" element={<Passport />} />
             <Route path="/p/:username" element={<Passport />} />
-            <Route path="/certifications/:id" element={<CredentialDisplay />} />
             <Route path="/verify/:id" element={<Verify />} />
 
             {/* Authenticated routes */}
@@ -74,7 +71,15 @@ const App = () => (
               }
             />
             <Route
-              path="/learn/:courseSlug/:moduleSlug"
+              path="/learn/:slug"
+              element={
+                <ProtectedRoute>
+                  <CoursePlayer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learn/:slug/*"
               element={
                 <ProtectedRoute>
                   <CoursePlayer />
@@ -118,9 +123,10 @@ const App = () => (
 
             {/* Legacy redirects */}
             <Route path="/training" element={<Navigate to="/academy" replace />} />
-            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses" element={<Navigate to="/academy" replace />} />
             <Route path="/courses/:slug" element={<Navigate to="/academy" replace />} />
-            <Route path="/credentials/:id" element={<CredentialDisplay />} />
+            <Route path="/certifications/:id" element={<Navigate to="/credentials" replace />} />
+            <Route path="/credentials/:id" element={<Navigate to="/credentials" replace />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

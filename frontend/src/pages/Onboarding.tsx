@@ -4,14 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Quippy from '@/components/Quippy';
 import { useAuth } from '@/hooks/useAuth';
+import { api, ApiError } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import type { BaseRole, Profile, TechDeclaration } from '@/lib/types';
 
-const roles = [
-  { label: 'Kitchen', icon: '🔥', desc: 'Cook, Chef, Line' },
-  { label: 'Bar', icon: '🍸', desc: 'Bartender, Barback' },
-  { label: 'Floor', icon: '🍽️', desc: 'Server, Host' },
-  { label: 'Management', icon: '📋', desc: 'GM, Manager' },
-  { label: 'Ownership', icon: '🔑', desc: 'Owner, Operator' },
-  { label: 'Something else', icon: '➕', desc: '' },
+const roles: Array<{ label: BaseRole | 'Something else'; roleValue: BaseRole; icon: string; desc: string }> = [
+  { label: 'Kitchen', roleValue: 'Kitchen', icon: '🔥', desc: 'Cook, Chef, Line' },
+  { label: 'Bar', roleValue: 'Bar', icon: '🍸', desc: 'Bartender, Barback' },
+  { label: 'Floor', roleValue: 'Floor', icon: '🍽️', desc: 'Server, Host' },
+  { label: 'Management', roleValue: 'Management', icon: '📋', desc: 'GM, Manager' },
+  { label: 'Ownership', roleValue: 'Ownership', icon: '🔑', desc: 'Owner, Operator' },
+  { label: 'Something else', roleValue: 'Other', icon: '➕', desc: '' },
 ];
 
 const equipmentList = [
@@ -25,9 +28,10 @@ const TOTAL_SCREENS = 5;
 
 const Onboarding = () => {
   const [screen, setScreen] = useState(1);
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState<BaseRole | ''>('');
   const [equipment, setEquipment] = useState<string[]>([]);
-  const { user, loading } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const { user, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,9 +48,31 @@ const Onboarding = () => {
     return 'Nice picks. Forward.';
   };
 
-  const finish = () => {
-    // TODO(M3): persist role + equipment to backend profile
-    navigate('/home', { replace: true });
+  const finish = async () => {
+    setSaving(true);
+    try {
+      if (role) {
+        await api<{ profile: Profile }>('/api/profile/me', {
+          method: 'PATCH',
+          auth: true,
+          body: { baseRole: role },
+        });
+      }
+      if (equipment.length > 0) {
+        await api<{ declarations: TechDeclaration[] }>('/api/tech-declarations/bulk', {
+          method: 'POST',
+          auth: true,
+          body: { equipmentNames: equipment },
+        });
+      }
+      await refreshProfile();
+      navigate('/home', { replace: true });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Something went wrong';
+      toast({ title: "Couldn't save your onboarding", description: message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const name = user?.firstName ?? 'there';
@@ -112,9 +138,9 @@ const Onboarding = () => {
               {roles.map((r) => (
                 <button
                   key={r.label}
-                  onClick={() => setRole(r.label)}
+                  onClick={() => setRole(r.roleValue)}
                   className={`rounded-3xl p-5 text-center transition-all min-h-[100px] ${
-                    role === r.label
+                    role === r.roleValue
                       ? 'bg-card border-2 border-primary'
                       : 'bg-card border-2 border-border hover:border-muted-foreground'
                   }`}
@@ -185,8 +211,13 @@ const Onboarding = () => {
             <p className="text-lg font-semibold text-foreground text-center mb-6">
               This one has your name on it.
             </p>
-            <Button size="lg" className="w-full max-w-[400px] h-14 text-base font-bold mb-3 rounded-full" onClick={finish}>
-              Start earning
+            <Button
+              size="lg"
+              className="w-full max-w-[400px] h-14 text-base font-bold mb-3 rounded-full"
+              onClick={finish}
+              disabled={saving}
+            >
+              {saving ? 'Saving…' : 'Start earning'}
             </Button>
           </motion.div>
         )}

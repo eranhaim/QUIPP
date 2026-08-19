@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 const MyPassportRedirect = () => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,8 +14,7 @@ const MyPassportRedirect = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // TODO(M3): replace with profile.username from backend
-  const handle = user.firstName?.toLowerCase() ?? user.email.split('@')[0];
+  const handle = profile?.username ?? user.firstName?.toLowerCase() ?? user.email.split('@')[0];
   return <Navigate to={`/passport/${handle}`} replace />;
 };
 

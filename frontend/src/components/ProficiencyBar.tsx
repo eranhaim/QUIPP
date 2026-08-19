@@ -1,4 +1,4 @@
-import { getTechScoreLabel } from '@/data/mockData';
+import { getTechScoreLabel } from '@/lib/scoreLabel';
 
 interface ProficiencyBarProps {
   label: string;

@@ -5,7 +5,9 @@ import { EmailToken, type EmailTokenPurpose } from '../models/EmailToken.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { randomToken, sha256 } from '../lib/crypto.js';
 import { sendMail } from './email.service.js';
+import { createProfileForUser } from './profile.service.js';
 import { env } from '../config/env.js';
+import { logger } from '../lib/logger.js';
 
 const BCRYPT_ROUNDS = 12;
 const EMAIL_TOKEN_TTL_MIN = 60;
@@ -57,6 +59,19 @@ export async function registerUser(input: RegisterInput): Promise<PublicUser> {
     lastName: input.lastName,
     roles: ['worker'],
   });
+
+  try {
+    await createProfileForUser({
+      userId: String(user._id),
+      firstName: input.firstName ?? null,
+      email,
+    });
+  } catch (err) {
+    logger.error('Failed to create profile after registration', err);
+    // fatal for the request — a user without a profile can't use most of the app
+    await User.deleteOne({ _id: user._id });
+    throw new HttpError(500, 'Could not complete registration. Please try again.');
+  }
 
   await sendEmailToken(String(user._id), email, 'verify_email');
   return toPublicUser(user.toObject());

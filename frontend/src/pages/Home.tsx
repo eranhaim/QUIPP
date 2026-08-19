@@ -1,9 +1,17 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, GraduationCap, IdCard, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  GraduationCap,
+  IdCard,
+  ShieldCheck,
+  type LucideIcon,
+} from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import TechScoreRing from '@/components/TechScoreRing';
 import { useAuth } from '@/hooks/useAuth';
-import { getTechScoreLabel } from '@/data/mockData';
+import { api } from '@/lib/api';
+import type { Credential, Enrollment } from '@/lib/types';
 
 function greeting(now = new Date()): string {
   const h = now.getHours();
@@ -16,14 +24,38 @@ function firstNameFromUser(user: { firstName: string | null; email: string }): s
   return (user.firstName ?? user.email.split('@')[0]).toUpperCase();
 }
 
+function heroSubcopy(techScore: number, hasCredentials: boolean): string {
+  if (hasCredentials && techScore >= 50) {
+    return 'Your Passport is talking. Add another credential and turn up the volume.';
+  }
+  if (hasCredentials) {
+    return 'Nice start. Every new credential moves your score.';
+  }
+  return 'Your passport is quiet today. One credential is all it takes to change that.';
+}
+
 const Home = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+
+  const enrollmentsQuery = useQuery({
+    queryKey: ['enrollments', 'me'],
+    queryFn: () => api<{ enrollments: Enrollment[] }>('/api/enrollments/me', { auth: true }),
+    enabled: !!user,
+  });
+
+  const credentialsQuery = useQuery({
+    queryKey: ['credentials', 'me'],
+    queryFn: () => api<{ credentials: Credential[] }>('/api/credentials/me', { auth: true }),
+    enabled: !!user,
+  });
+
   if (!user) return null;
 
-  // TODO(M3): replace with real profile.techProficiencyScore and course enrollment
-  const techScore = 0;
-  const scoreLabel = getTechScoreLabel(techScore);
-  const hasCurrentCourse = false;
+  const techScore = profile?.techProficiencyScore ?? 0;
+  const enrollments = enrollmentsQuery.data?.enrollments ?? [];
+  const credentials = credentialsQuery.data?.credentials ?? [];
+  const currentCourse = enrollments.find((e) => e.status === 'in_progress' || e.status === 'failed');
+  const recentCredentials = credentials.slice(0, 4);
 
   return (
     <AppShell>
@@ -37,7 +69,7 @@ const Home = () => {
               {firstNameFromUser(user)}.
             </h1>
             <p className="mt-4 text-base md:text-lg text-white/70 max-w-md">
-              Your passport is quiet today. One credential is all it takes to change that.
+              {heroSubcopy(techScore, credentials.length > 0)}
             </p>
             <Link
               to="/academy"
@@ -56,8 +88,10 @@ const Home = () => {
       <section className="px-5 md:px-10 py-10 md:py-14">
         <div className="max-w-[1000px] mx-auto">
           <SectionHeader eyebrow="Continue" title="Pick up where you left off" />
-          {hasCurrentCourse ? (
-            <div className="rounded-2xl border border-border p-6" />
+          {enrollmentsQuery.isPending ? (
+            <SkeletonCard />
+          ) : currentCourse ? (
+            <ContinueCourseCard enrollment={currentCourse} />
           ) : (
             <EmptyCourseCard />
           )}
@@ -81,23 +115,31 @@ const Home = () => {
             <ActionTile
               to="/credentials"
               Icon={ShieldCheck}
-              title="Verify a badge"
-              body="Check any QUIPP credential by ID."
+              title="My credentials"
+              body="Every credential you have earned. Permanent. Portable."
             />
           </div>
 
           <div className="h-10" />
 
           <SectionHeader eyebrow="Latest" title="Recent credentials" />
-          <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center">
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              You have no credentials yet. Pass an assessment and it lands here — permanently.
-            </p>
-          </div>
+          {credentialsQuery.isPending ? (
+            <SkeletonCard />
+          ) : recentCredentials.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center">
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                You have no credentials yet. Pass an assessment and it lands here — permanently.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recentCredentials.map((c) => (
+                <CredentialCard key={c.id} credential={c} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
-
-      <p className="sr-only">Tech score label: {scoreLabel}</p>
     </AppShell>
   );
 };
@@ -114,6 +156,47 @@ const SectionHeader = ({ eyebrow, title }: SectionHeaderProps) => (
       {title}
     </h2>
     <div className="w-10 h-0.5 bg-primary mt-2" />
+  </div>
+);
+
+const SkeletonCard = () => (
+  <div className="rounded-2xl border border-border bg-card p-6 md:p-8 animate-pulse">
+    <div className="h-4 w-32 bg-muted rounded" />
+    <div className="mt-3 h-6 w-64 bg-muted rounded" />
+    <div className="mt-6 h-2 w-full bg-muted rounded-full" />
+  </div>
+);
+
+const ContinueCourseCard = ({ enrollment }: { enrollment: Enrollment }) => (
+  <div className="rounded-2xl border border-border bg-card p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
+    <div className="flex-1">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-primary">
+        {enrollment.tagName} · {enrollment.tier}
+      </p>
+      <h3 className="mt-1 text-xl font-bold font-display uppercase text-foreground">
+        {enrollment.courseTitle}
+      </h3>
+      <p className="text-sm text-muted-foreground mt-2">
+        {enrollment.status === 'failed'
+          ? enrollment.cooldownEndsAt && new Date(enrollment.cooldownEndsAt) > new Date()
+            ? `You can retake after ${new Date(enrollment.cooldownEndsAt).toLocaleString()}.`
+            : 'Retake ready. You have got this.'
+          : `${enrollment.progressPct}% complete`}
+      </p>
+      <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-700"
+          style={{ width: `${enrollment.progressPct}%` }}
+        />
+      </div>
+    </div>
+    <Link
+      to={`/training/${enrollment.courseSlug}`}
+      className="inline-flex items-center gap-2 rounded-full bg-foreground text-background px-5 py-2.5 text-sm font-bold uppercase tracking-wider hover:opacity-90 transition-opacity self-start md:self-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
+    >
+      Continue
+      <ArrowRight className="h-4 w-4" aria-hidden />
+    </Link>
   </div>
 );
 
@@ -136,6 +219,28 @@ const EmptyCourseCard = () => (
       <ArrowRight className="h-4 w-4" aria-hidden />
     </Link>
   </div>
+);
+
+const CredentialCard = ({ credential }: { credential: Credential }) => (
+  <Link
+    to={`/verify/${credential.verificationId}`}
+    className="rounded-2xl border border-border bg-card p-5 flex flex-col hover:border-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+  >
+    <div className="flex items-center justify-between">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {credential.provider}
+      </p>
+      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-foreground text-background">
+        {credential.tier}
+      </span>
+    </div>
+    <h3 className="mt-2 text-base font-bold font-display uppercase text-foreground">
+      {credential.courseName}
+    </h3>
+    <p className="text-xs text-muted-foreground mt-1">
+      Earned {new Date(credential.earnedDate).toLocaleDateString()}
+    </p>
+  </Link>
 );
 
 interface ActionTileProps {

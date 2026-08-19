@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, IdCard, GraduationCap, ShieldCheck, Users, LogOut, Settings } from 'lucide-react';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import { useAuth, type AuthUser } from '@/hooks/useAuth';
-import { getTechScoreLabel } from '@/data/mockData';
 
 const NAV_ITEMS = [
   { to: '/home', label: 'Home', Icon: Home },
@@ -18,24 +17,19 @@ function displayName(user: AuthUser): string {
   return user.email.split('@')[0];
 }
 
-function handle(user: AuthUser): string {
-  // TODO(M3): replace with profile.username once Profile is wired
-  return user.firstName?.toLowerCase() ?? user.email.split('@')[0];
-}
-
 interface SidebarProps {
   onNavigate?: () => void;
 }
 
 const Sidebar = ({ onNavigate }: SidebarProps) => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
 
   if (!user) return null;
 
-  // TODO(M3): read profile.techProficiencyScore from backend
-  const techScore = 0;
-  const scoreLabel = getTechScoreLabel(techScore).toUpperCase();
+  const handle = profile?.username ?? user.firstName?.toLowerCase() ?? user.email.split('@')[0];
+  const techScore = profile?.techProficiencyScore ?? 0;
+  const scoreLabel = (profile?.techScoreLabel ?? 'Building').toUpperCase();
 
   const handleSignOut = async () => {
     await logout();
@@ -64,7 +58,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">{displayName(user)}</p>
-            <p className="text-xs text-white/50 truncate">@{handle(user)}</p>
+            <p className="text-xs text-white/50 truncate">@{handle}</p>
           </div>
         </div>
         <div className="mt-4 rounded-2xl border border-white/10 px-4 py-3">
