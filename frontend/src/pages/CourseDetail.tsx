@@ -111,7 +111,7 @@ const CourseDetail = () => {
               {course.tier}
             </span>
             {course.isManufacturer && (
-              <span className="inline-block text-[10px] font-bold uppercase px-3 py-1 rounded-full border border-primary/40 text-primary ml-2">
+              <span className="inline-block text-[10px] font-bold uppercase px-3 py-1 rounded-full border border-secondary/40 text-secondary ml-2">
                 {course.provider} CERTIFIED
               </span>
             )}
@@ -119,7 +119,7 @@ const CourseDetail = () => {
               {course.duration} minutes · {course.passMark}% to pass · {masteryPart?.questionCount ?? 10}{' '}
               questions
             </p>
-            <p className="text-sm font-bold text-primary mt-2">
+            <p className="text-sm font-bold text-secondary mt-2">
               +{course.techScoreContribution} score points
             </p>
           </div>
@@ -148,7 +148,7 @@ const CourseDetail = () => {
               <ul className="space-y-3">
                 {knowledgePart.topics.map((topic, i) => (
                   <li key={i} className="flex items-start gap-3 text-base text-muted-foreground">
-                    <span className="text-primary font-bold">→</span>
+                    <span className="text-secondary font-bold" aria-hidden="true">→</span>
                     {topic}
                   </li>
                 ))}
@@ -160,7 +160,7 @@ const CourseDetail = () => {
             <div className="space-y-3">
               {course.parts.map((part, i) => (
                 <div key={part.partId} className="flex items-center gap-4 p-4 rounded-2xl bg-background">
-                  <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                  <span className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-sm font-bold text-secondary flex-shrink-0">
                     {i + 1}
                   </span>
                   <div className="flex-1">
@@ -210,7 +210,7 @@ const SectionCard = ({ title, children }: { title: string; children: React.React
 
 const Bullet = ({ children }: { children: React.ReactNode }) => (
   <li className="flex items-start gap-3 text-base text-muted-foreground">
-    <span className="text-primary">→</span>
+    <span className="text-secondary" aria-hidden="true">→</span>
     {children}
   </li>
 );

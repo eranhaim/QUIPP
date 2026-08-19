@@ -53,11 +53,17 @@ const CredentialPatch = ({ credential, onClick }: CredentialPatchProps) => {
       >
         {credential.tier}
       </span>
-      <span className="absolute bottom-1.5 left-1.5 text-[8px] font-bold font-display opacity-50 lowercase">
+      <span
+        className="absolute bottom-1.5 left-1.5 text-[8px] font-bold font-display lowercase opacity-80"
+        aria-hidden="true"
+      >
         q
       </span>
       {credential.isManufacturer && (
-        <span className="absolute bottom-1.5 right-1.5 text-[8px] font-bold opacity-50 uppercase">
+        <span
+          className="absolute bottom-1.5 right-1.5 text-[8px] font-bold uppercase opacity-80"
+          aria-hidden="true"
+        >
           {credential.provider}
         </span>
       )}

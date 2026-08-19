@@ -154,7 +154,7 @@ const FilterPill = ({ active, onClick, children }: FilterPillProps) => (
 
 const ShelfHeader = ({ tag }: { tag: TechTag }) => (
   <div>
-    <p className="text-xs font-bold uppercase tracking-widest text-primary">{tag.icon} {tag.label}</p>
+    <p className="text-xs font-bold uppercase tracking-widest text-secondary">{tag.icon} {tag.label}</p>
     <h2 className="text-2xl md:text-3xl font-bold font-display text-foreground uppercase mt-1">
       {tag.label} courses
     </h2>

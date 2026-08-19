@@ -15,11 +15,18 @@ const TechScoreRing = ({ score, size = 140, strokeWidth = 8, className = '' }: T
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`}>
-      <svg width={size} height={size} className="-rotate-90">
+      <svg
+        width={size}
+        height={size}
+        className="-rotate-90"
+        role="img"
+        aria-label={`Tech proficiency ${score} out of 100 — ${label}`}
+      >
+        <title>{`Tech proficiency ${score} of 100`}</title>
         <circle
           cx={size / 2} cy={size / 2} r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.2)"
+          stroke="rgba(255,255,255,0.3)"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -33,10 +40,10 @@ const TechScoreRing = ({ score, size = 140, strokeWidth = 8, className = '' }: T
           style={{ transition: 'stroke-dashoffset 1s ease-out' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
         <span className="text-4xl font-bold text-white font-display">{score}</span>
-        <span className="text-xs text-white/60">/ 100</span>
-        <span className="text-[11px] font-bold uppercase tracking-wider text-white/60 mt-1">{label}</span>
+        <span className="text-xs text-white/80">/ 100</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-white/80 mt-1">{label}</span>
       </div>
     </div>
   );

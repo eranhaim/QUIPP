@@ -58,14 +58,14 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">{displayName(user)}</p>
-            <p className="text-xs text-white/50 truncate">@{handle}</p>
+            <p className="text-xs text-white/70 truncate">@{handle}</p>
           </div>
         </div>
         <div className="mt-4 rounded-2xl border border-white/10 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-widest text-white/50">Tech proficiency</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/70">Tech proficiency</p>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-2xl font-bold font-display text-white">{techScore}</span>
-            <span className="text-xs text-white/40">/ 100</span>
+            <span className="text-xs text-white/70">/ 100</span>
           </div>
           <p className="text-[11px] font-bold uppercase tracking-wider text-primary mt-0.5">
             {scoreLabel}

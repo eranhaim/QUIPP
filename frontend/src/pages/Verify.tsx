@@ -84,13 +84,13 @@ const Verify = () => {
       <section className="pt-16 md:pt-28 pb-24">
         <div className="max-w-[600px] mx-auto px-5">
           <div className="text-center mb-10">
-            <span className="text-2xl font-bold font-display text-primary lowercase mb-4 block">
+            <span className="text-2xl font-bold font-display text-secondary lowercase mb-4 block">
               quipp
             </span>
             <h1 className="text-[32px] md:text-[48px] font-bold font-display text-foreground mb-4 uppercase tracking-tight">
               Credential verified
             </h1>
-            <p className="inline-flex items-center gap-2 text-xl font-bold font-display text-primary">
+            <p className="inline-flex items-center gap-2 text-xl font-bold font-display text-secondary">
               <CheckCircle2 className="h-6 w-6" aria-hidden />
               Verified
             </p>
@@ -116,7 +116,7 @@ const Verify = () => {
               {credential.tier}
             </span>
             {credential.isManufacturer && (
-              <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-primary/30 text-primary ml-2">
+              <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-secondary/40 text-secondary ml-2">
                 {credential.provider}
               </span>
             )}
@@ -141,7 +141,7 @@ const Verify = () => {
               <ul className="space-y-2">
                 {credential.skillsDemonstrated.map((skill, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-primary">→</span>
+                    <span className="text-secondary" aria-hidden="true">→</span>
                     {skill}
                   </li>
                 ))}
@@ -150,12 +150,16 @@ const Verify = () => {
           )}
 
           <div className="text-center">
-            <div className="flex justify-center mb-4">
+            <div
+              className="flex justify-center mb-4"
+              role="img"
+              aria-label={`QR code linking to ${verifyUrl}`}
+            >
               <QRCodeSVG
                 value={verifyUrl}
                 size={120}
-                bgColor="transparent"
-                fgColor="hsl(0,0%,100%)"
+                bgColor="#ffffff"
+                fgColor="#221f20"
               />
             </div>
             <p className="text-lg font-bold font-display text-foreground mb-4 uppercase">
