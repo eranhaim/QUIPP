@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Quippy from '@/components/Quippy';
 import QuippSymbol from '@/components/QuippSymbol';
 import { api, ApiError } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import type { Course, Enrollment, QuizResult, TagName, Tier } from '@/lib/types';
 
 const TAG_ICON: Record<TagName, string> = {
@@ -29,6 +30,7 @@ const CoursePlayer = () => {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { refreshProfile } = useAuth();
 
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -62,6 +64,8 @@ const CoursePlayer = () => {
       qc.invalidateQueries({ queryKey: ['enrollments', 'me'] });
       qc.invalidateQueries({ queryKey: ['credentials', 'me'] });
       qc.invalidateQueries({ queryKey: ['profile', 'me'] });
+      // Refresh the auth context so the sidebar's cached tech score updates immediately.
+      refreshProfile().catch(() => undefined);
     },
   });
 

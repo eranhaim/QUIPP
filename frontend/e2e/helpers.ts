@@ -29,8 +29,14 @@ export interface AxeViolationSummary {
 /**
  * Run an axe accessibility scan restricted to WCAG 2 A/AA rules and return
  * a compact summary of any serious/critical violations.
+ *
+ * Waits briefly for framer-motion opacity/transform animations to finish
+ * before scanning, since axe otherwise sees transient low-opacity elements
+ * as contrast failures.
  */
 export async function scanA11y(page: Page): Promise<AxeViolationSummary[]> {
+  await page.waitForLoadState('networkidle').catch(() => undefined);
+  await page.waitForTimeout(900);
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])
     .analyze();
