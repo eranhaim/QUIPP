@@ -219,7 +219,13 @@ const Passport = () => {
             quipp.co/p/{profile.username}
           </a>
           <div className="flex justify-center mb-6">
-            <QRCodeSVG value={passportUrl} size={140} bgColor="transparent" fgColor="#d1f300" />
+            <QRCodeSVG
+              value={passportUrl}
+              size={140}
+              bgColor="transparent"
+              fgColor="#d1f300"
+              title={`QR code linking to ${passportUrl}`}
+            />
           </div>
           <Button
             className="rounded-full h-12 px-8 font-bold"

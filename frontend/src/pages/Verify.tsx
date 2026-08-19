@@ -150,16 +150,13 @@ const Verify = () => {
           )}
 
           <div className="text-center">
-            <div
-              className="flex justify-center mb-4"
-              role="img"
-              aria-label={`QR code linking to ${verifyUrl}`}
-            >
+            <div className="flex justify-center mb-4">
               <QRCodeSVG
                 value={verifyUrl}
                 size={120}
                 bgColor="#ffffff"
                 fgColor="#221f20"
+                title={`QR code linking to ${verifyUrl}`}
               />
             </div>
             <p className="text-lg font-bold font-display text-foreground mb-4 uppercase">

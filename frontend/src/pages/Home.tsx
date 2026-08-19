@@ -151,11 +151,11 @@ interface SectionHeaderProps {
 
 const SectionHeader = ({ eyebrow, title }: SectionHeaderProps) => (
   <div className="mb-5">
-    <p className="text-[11px] font-bold uppercase tracking-widest text-primary">{eyebrow}</p>
+    <p className="text-[11px] font-bold uppercase tracking-widest text-secondary">{eyebrow}</p>
     <h2 className="text-2xl md:text-3xl font-bold font-display text-foreground uppercase mt-1">
       {title}
     </h2>
-    <div className="w-10 h-0.5 bg-primary mt-2" />
+    <div className="w-10 h-0.5 bg-secondary mt-2" />
   </div>
 );
 
@@ -170,7 +170,7 @@ const SkeletonCard = () => (
 const ContinueCourseCard = ({ enrollment }: { enrollment: Enrollment }) => (
   <div className="rounded-2xl border border-border bg-card p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
     <div className="flex-1">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-primary">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-secondary">
         {enrollment.tagName} · {enrollment.tier}
       </p>
       <h3 className="mt-1 text-xl font-bold font-display uppercase text-foreground">

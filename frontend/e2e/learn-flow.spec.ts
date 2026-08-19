@@ -31,7 +31,8 @@ test.describe('Full learner flow: signup → onboarding → academy → earn cre
       // Screen 2: value props → "Forward →"
       await page.getByRole('button', { name: /forward/i }).click();
       // Screen 3: role select → click "Kitchen" → "This is me"
-      await page.getByRole('button', { name: /^kitchen$/i }).click();
+      // The button's accessible name is "🔥 Kitchen" (emoji + label), so use contains.
+      await page.getByRole('button', { name: /kitchen/i }).click();
       await page.getByRole('button', { name: /this is me/i }).click();
       // Screen 4: equipment → "These are mine" (skip picking any for speed)
       await page.getByRole('button', { name: /these are mine/i }).click();
