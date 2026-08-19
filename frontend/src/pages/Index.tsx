@@ -61,7 +61,7 @@ const Index = () => {
             {features.map((f, i) => (
               <motion.div key={f.title} {...fade(i * 0.08)} className="text-center md:text-left">
                 <h3 className="text-2xl md:text-3xl font-bold font-display text-foreground uppercase leading-tight mb-1">{f.title}</h3>
-                <h3 className="text-2xl md:text-3xl font-bold font-display text-primary uppercase leading-tight mb-4">{f.subtitle}</h3>
+                <h3 className="text-2xl md:text-3xl font-bold font-display text-secondary uppercase leading-tight mb-4">{f.subtitle}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
@@ -73,7 +73,7 @@ const Index = () => {
       <section className="pb-24 md:pb-32 bg-background">
         <div className="max-w-[1200px] mx-auto px-5">
           <motion.h2 {...fade()} className="text-3xl md:text-5xl font-bold font-display text-foreground mb-4 text-center uppercase">
-            CHOOSE YOUR <span className="text-primary">PATH</span>
+            CHOOSE YOUR <span className="text-secondary">PATH</span>
           </motion.h2>
           <p className="text-base text-muted-foreground text-center max-w-[480px] mx-auto mb-12">Every hospitality role has a tech future. Pick yours.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -83,7 +83,7 @@ const Index = () => {
                 <h3 className="text-2xl font-bold font-display text-foreground mb-1 uppercase">{path.role}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{path.from} → {path.role}</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">{path.desc}</p>
-                <Link to="/academy" className="text-sm font-bold text-primary mt-6 inline-block group-hover:underline">Start →</Link>
+                <Link to="/academy" className="text-sm font-bold text-secondary mt-6 inline-block group-hover:underline">Start →</Link>
               </motion.div>
             ))}
           </div>
@@ -94,11 +94,11 @@ const Index = () => {
       <section className="pb-24 md:pb-32 bg-background">
         <div className="max-w-[1200px] mx-auto px-5">
           <motion.h2 {...fade()} className="text-3xl md:text-5xl font-bold font-display text-foreground mb-12 uppercase">
-            THE <span className="text-primary">MAGAZINE</span>
+            THE <span className="text-secondary">MAGAZINE</span>
           </motion.h2>
           <motion.div {...fade(0.1)} className="bg-background border border-border rounded-lg overflow-hidden mb-6">
             <div className="p-10 md:p-16">
-              <span className="text-xs font-bold uppercase tracking-widest text-primary mb-4 block">{featured.category}</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-secondary mb-4 block">{featured.category}</span>
               <h3 className="text-3xl md:text-[40px] font-bold font-display text-foreground leading-tight mb-4">{featured.title}</h3>
               <p className="text-base text-muted-foreground mb-8 max-w-[600px]">{featured.excerpt}</p>
               <span className="text-xs text-muted-foreground">{featured.readTime} read</span>
@@ -107,7 +107,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {updates.map((article, i) => (
               <motion.div key={article.id} {...fade(0.15 + i * 0.05)} className="bg-background border border-border rounded-lg p-7 hover:shadow-lg transition-shadow cursor-pointer">
-                <span className="text-xs font-bold uppercase tracking-widest text-primary mb-3 block">{article.category}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-secondary mb-3 block">{article.category}</span>
                 <h3 className="text-base font-semibold text-foreground mb-2 leading-snug">{article.title}</h3>
                 <p className="text-sm text-muted-foreground line-clamp-2">{article.excerpt}</p>
               </motion.div>

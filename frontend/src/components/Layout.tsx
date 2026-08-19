@@ -108,7 +108,7 @@ const Layout = ({ children }: LayoutProps) => {
             GET <span className="text-primary">QUIPP'D</span>
           </h3>
           <p className="text-sm text-white/60 mb-6">Your skills. Your story. Your future.</p>
-          <p className="text-xs text-white/40">quipp.co · © 2026 Joonius Inc.</p>
+          <p className="text-xs text-white/70">quipp.co · © 2026 Joonius Inc.</p>
         </div>
       </footer>
     </div>

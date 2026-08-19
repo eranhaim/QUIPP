@@ -28,7 +28,8 @@
     --secondary-foreground: var(--color-white);
 
     --muted: 0 0% 96%;
-    --muted-foreground: 15 3% 46%;
+    /* WCAG AA: 15 3% 46% ~= 4.4:1 (fails). 38% brings us to ~6.6:1 on white. */
+    --muted-foreground: 15 3% 38%;
 
     --accent: 0 0% 96%;
     --accent-foreground: var(--color-almost-black);

@@ -41,7 +41,7 @@ const Signup = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-5 py-12">
       <div className="w-full max-w-[480px]">
         <div className="text-center mb-10">
-          <span className="text-3xl font-bold font-display text-primary lowercase">quipp</span>
+          <span className="text-3xl font-bold font-display text-secondary lowercase">quipp</span>
         </div>
 
         <div className="bg-card rounded-3xl p-10">
@@ -105,7 +105,7 @@ const Signup = () => {
 
           <p className="text-sm text-muted-foreground text-center mt-6">
             Already here?{' '}
-            <Link to="/login" className="text-primary font-medium hover:underline">
+            <Link to="/login" className="text-secondary font-semibold hover:underline">
               Log in
             </Link>
           </p>

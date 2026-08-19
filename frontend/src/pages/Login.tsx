@@ -40,7 +40,7 @@ const Login = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-5">
       <div className="w-full max-w-[480px]">
         <div className="text-center mb-10">
-          <span className="text-3xl font-bold font-display text-primary lowercase">quipp</span>
+          <span className="text-3xl font-bold font-display text-secondary lowercase">quipp</span>
         </div>
 
         <div className="bg-card rounded-3xl p-10">
@@ -87,7 +87,7 @@ const Login = () => {
 
           <p className="text-sm text-muted-foreground text-center mt-6">
             New here?{' '}
-            <Link to="/signup" className="text-primary font-medium hover:underline">
+            <Link to="/signup" className="text-secondary font-semibold hover:underline">
               Start
             </Link>
           </p>
