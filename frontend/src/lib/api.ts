@@ -75,3 +75,74 @@ export async function api<T = unknown>(path: string, opts: RequestOptions = {}):
   }
   return data as T;
 }
+
+/**
+ * Upload a file directly to a presigned S3 PUT URL using XMLHttpRequest so we
+ * can surface real progress events to the UI. Rejects on non-2xx status.
+ */
+export function uploadToPresigned(
+  url: string,
+  file: File,
+  contentType: string,
+  onProgress?: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url, true);
+    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new ApiError(xhr.status, `S3 upload failed (${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, 'Network error during upload'));
+    xhr.onabort = () => reject(new ApiError(0, 'Upload aborted'));
+    xhr.send(file);
+  });
+}
+
+/**
+ * Server-sent-event style streaming reader for `/api/quippy/message`. Yields
+ * assistant text chunks until the stream ends. The endpoint sends plain-text
+ * chunks (not SSE) — we treat each chunk as an incremental delta.
+ */
+export async function streamText(
+  path: string,
+  body: unknown,
+  onChunk: (delta: string) => void,
+): Promise<void> {
+  const token = accessToken;
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok || !res.body) {
+    const text = await res.text().catch(() => '');
+    let msg = `Chat request failed (${res.status})`;
+    try {
+      msg = (JSON.parse(text) as { error?: string })?.error ?? msg;
+    } catch {
+      /* not JSON */
+    }
+    throw new ApiError(res.status, msg);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onChunk(decoder.decode(value, { stream: true }));
+  }
+}

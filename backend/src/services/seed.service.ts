@@ -22,12 +22,13 @@ interface SeedQuestion {
 
 interface SeedPart {
   partId: string;
-  type: 'real_world' | 'knowledge' | 'mastery_check' | 'credential';
+  type: 'real_world' | 'knowledge' | 'video' | 'mastery_check' | 'credential';
   title: string;
   duration: string;
   content: string;
   topics?: string[];
   questions?: SeedQuestion[];
+  directVideoUrl?: string;
 }
 
 interface SeedCourse {
@@ -47,6 +48,25 @@ interface SeedCourse {
   technicalCompetencies: string[];
   parts: SeedPart[];
 }
+
+/**
+ * Publicly-hosted sample MP4 URLs used only for seed content so a fresh clone
+ * can render the video part before real admin uploads exist. Real courses use
+ * `videoId` referencing S3-uploaded Video documents.
+ */
+const SAMPLE_VIDEOS = {
+  bigBuckBunny: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  elephantsDream:
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+  forBiggerBlazes:
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+  forBiggerFun:
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+  forBiggerJoyrides:
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+  forBiggerMeltdowns:
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+} as const;
 
 const COMBI_QUESTIONS: SeedQuestion[] = [
   { question: "You're roasting chicken at 180°C. The skin isn't crisping. Which mode adjustment fixes this?", options: ['Add more steam', 'Switch to convection only', 'Lower temperature', 'Increase humidity'], correctIndex: 1, explanation: 'Convection mode removes moisture from the surface, allowing the skin to crisp.' },
@@ -137,9 +157,10 @@ const COURSES: SeedCourse[] = [
     ],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: "The combi oven is in 90% of serious kitchens. Once you know this machine, you're untouchable." },
-      { partId: 'p2', type: 'knowledge', title: 'The Knowledge', duration: '15 min', content: 'Master the combi oven inside and out.', topics: ['What is a combi oven and why it exists', 'The three cooking modes (steam / convection / combination)', 'Temperature and humidity control', 'Cleaning cycles and maintenance', 'Common mistakes and how to avoid them'] },
-      { partId: 'p3', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: COMBI_QUESTIONS },
-      { partId: 'p4', type: 'credential', title: 'The Credential', duration: '', content: 'Your Smart Ovens credential. Earned. Yours.' },
+      { partId: 'p2', type: 'video', title: 'Watch: combi oven basics', duration: '2 min', content: 'A quick tour of the modes and controls.', directVideoUrl: SAMPLE_VIDEOS.bigBuckBunny },
+      { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '15 min', content: 'Master the combi oven inside and out.', topics: ['What is a combi oven and why it exists', 'The three cooking modes (steam / convection / combination)', 'Temperature and humidity control', 'Cleaning cycles and maintenance', 'Common mistakes and how to avoid them'] },
+      { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: COMBI_QUESTIONS },
+      { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your Smart Ovens credential. Earned. Yours.' },
     ],
   },
   {
@@ -159,9 +180,10 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Grinder calibration', 'Extraction timing', 'Milk texturing', 'Cleaning protocols'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'Every coffee programme depends on the barista who runs the machine.' },
-      { partId: 'p2', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master espresso operations end to end.', topics: ['Grinder calibration', 'Dose and distribution', 'Extraction timing', 'Milk texturing', 'Cleaning and maintenance'] },
-      { partId: 'p3', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: ESPRESSO_QUESTIONS },
-      { partId: 'p4', type: 'credential', title: 'The Credential', duration: '', content: 'Your Commercial Espresso credential. Earned. Yours.' },
+      { partId: 'p2', type: 'video', title: 'Watch: pulling the perfect shot', duration: '2 min', content: 'Extraction principles in action.', directVideoUrl: SAMPLE_VIDEOS.elephantsDream },
+      { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master espresso operations end to end.', topics: ['Grinder calibration', 'Dose and distribution', 'Extraction timing', 'Milk texturing', 'Cleaning and maintenance'] },
+      { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: ESPRESSO_QUESTIONS },
+      { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your Commercial Espresso credential. Earned. Yours.' },
     ],
   },
   {
@@ -181,9 +203,10 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Order management', 'Payment processing', 'Table management', 'Reporting'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'The POS is the nerve center of every restaurant.' },
-      { partId: 'p2', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master POS operations end to end.', topics: ['Order management and modifiers', 'Payment processing', 'Table management', 'Reporting and daily close', 'Troubleshooting common issues'] },
-      { partId: 'p3', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this system. 80% to pass.', questions: POS_QUESTIONS },
-      { partId: 'p4', type: 'credential', title: 'The Credential', duration: '', content: 'Your POS Systems credential. Earned. Yours.' },
+      { partId: 'p2', type: 'video', title: 'Watch: order flow on the POS', duration: '2 min', content: 'From tap to KDS in one shot.', directVideoUrl: SAMPLE_VIDEOS.forBiggerBlazes },
+      { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master POS operations end to end.', topics: ['Order management and modifiers', 'Payment processing', 'Table management', 'Reporting and daily close', 'Troubleshooting common issues'] },
+      { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this system. 80% to pass.', questions: POS_QUESTIONS },
+      { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your POS Systems credential. Earned. Yours.' },
     ],
   },
   {
@@ -203,9 +226,10 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Danger zone management', 'Blast chill cycles', 'HACCP compliance', 'Equipment maintenance'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'Blast chillers prevent the danger zone. Every kitchen needs a cook who knows this.' },
-      { partId: 'p2', type: 'knowledge', title: 'The Knowledge', duration: '10 min', content: 'Master blast chilling operations.', topics: ['Temperature danger zone', 'Blast chilling vs slow cooling', 'Shock freezing', 'HACCP compliance', 'Maintenance protocols'] },
-      { partId: 'p3', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: BLAST_CHILLER_QUESTIONS },
-      { partId: 'p4', type: 'credential', title: 'The Credential', duration: '', content: 'Your Blast Chillers credential. Earned. Yours.' },
+      { partId: 'p2', type: 'video', title: 'Watch: chilling through the danger zone', duration: '2 min', content: 'How rapid cooling works.', directVideoUrl: SAMPLE_VIDEOS.forBiggerFun },
+      { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '10 min', content: 'Master blast chilling operations.', topics: ['Temperature danger zone', 'Blast chilling vs slow cooling', 'Shock freezing', 'HACCP compliance', 'Maintenance protocols'] },
+      { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: BLAST_CHILLER_QUESTIONS },
+      { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your Blast Chillers credential. Earned. Yours.' },
     ],
   },
   {
@@ -225,9 +249,39 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Reservation systems', 'Tableside ordering', 'Delivery integration', 'Guest experience tech'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'Guests interact with technology before they interact with you. Know the tools.' },
-      { partId: 'p2', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master front-of-house technology.', topics: ['Reservation systems', 'Tableside ordering', 'Guest-facing displays', 'Delivery platform integration', 'Tech-enhanced service flow'] },
-      { partId: 'p3', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know FOH tech. 80% to pass.', questions: FOH_QUESTIONS },
-      { partId: 'p4', type: 'credential', title: 'The Credential', duration: '', content: 'Your FOH Tech credential. Earned. Yours.' },
+      { partId: 'p2', type: 'video', title: 'Watch: the guest journey on FOH tech', duration: '2 min', content: 'From reservation to receipt.', directVideoUrl: SAMPLE_VIDEOS.forBiggerJoyrides },
+      { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master front-of-house technology.', topics: ['Reservation systems', 'Tableside ordering', 'Guest-facing displays', 'Delivery platform integration', 'Tech-enhanced service flow'] },
+      { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know FOH tech. 80% to pass.', questions: FOH_QUESTIONS },
+      { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your FOH Tech credential. Earned. Yours.' },
+    ],
+  },
+  // ─── DEEP tier ─────────────────────────────────────────────────────────────
+  {
+    slug: 'smart-ovens-deep',
+    title: 'Smart Ovens · DEEP',
+    techFocus: 'Advanced Combi Oven Operations',
+    tagName: 'THERMAL',
+    tier: 'DEEP',
+    duration: 45,
+    description: 'Advanced combi oven mastery — after an IN credential and supervisor-confirmed field practice.',
+    provider: 'UNOX',
+    isManufacturer: true,
+    equipmentName: 'Combi Oven',
+    passMark: 80,
+    retakeCooldownHours: 48,
+    techScoreContribution: 10,
+    technicalCompetencies: [
+      'Advanced multi-mode programming',
+      'HACCP-compliant cleaning documentation',
+      'Fault diagnosis from error codes',
+      'Mentoring IN-level cooks',
+      'Programme creation and portability',
+    ],
+    parts: [
+      { partId: 'p1', type: 'real_world', title: 'From operator to programmer', duration: '3 min', content: 'DEEP means you can build, document, and defend a programme — not just run one.' },
+      { partId: 'p2', type: 'video', title: 'Watch: programming a multi-step cook', duration: '3 min', content: 'A walkthrough of a real service programme.', directVideoUrl: SAMPLE_VIDEOS.forBiggerMeltdowns },
+      { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '15 min', content: 'What separates DEEP from IN.', topics: ['Multi-step programme design', 'Delta-T cooking and core probes', 'HACCP documentation from the combi', 'Preventative maintenance schedules', 'Coaching an IN-level cook'] },
+      { partId: 'p4', type: 'credential', title: 'Your DEEP credential', duration: '', content: 'Auto-issued once your supervisor confirmation is approved.' },
     ],
   },
 ];

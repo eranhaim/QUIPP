@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, IdCard, GraduationCap, ShieldCheck, Users, LogOut, Settings } from 'lucide-react';
+import { Home, IdCard, GraduationCap, ShieldCheck, Users, LogOut, Settings, Wrench } from 'lucide-react';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import { useAuth, type AuthUser } from '@/hooks/useAuth';
 
@@ -96,6 +96,16 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       </nav>
 
       <div className="px-3 pb-5 space-y-0.5 border-t border-white/10 pt-3">
+        {user.roles.includes('admin') && (
+          <NavLink
+            to="/admin"
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <Wrench className="h-4 w-4" aria-hidden />
+            <span>Admin</span>
+          </NavLink>
+        )}
         <NavLink
           to="/settings"
           onClick={onNavigate}

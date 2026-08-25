@@ -20,15 +20,21 @@ export interface Profile {
   visibilityStatus: VisibilityStatus;
 }
 
+export type CoursePartType = 'real_world' | 'knowledge' | 'video' | 'mastery_check' | 'credential';
+
 export interface CoursePart {
   partId: string;
-  type: 'real_world' | 'knowledge' | 'mastery_check' | 'credential';
+  type: CoursePartType;
   title: string;
   duration: string;
   content: string;
   topics: string[];
   questions: Array<{ question: string; options: string[] }>;
   questionCount: number;
+  videoId: string | null;
+  videoUrl: string | null;
+  videoMimeType: string | null;
+  videoDurationSec: number | null;
 }
 
 export interface Course {
@@ -126,4 +132,65 @@ export interface TechTag {
   label: string;
   icon: string;
   description: string;
+}
+
+export interface AdminCoursePart {
+  partId: string;
+  type: CoursePartType;
+  title: string;
+  duration: string;
+  content: string;
+  topics: string[];
+  questions: Array<{
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  }>;
+  videoId: string | null;
+}
+
+export interface AdminCourse extends Omit<Course, 'parts'> {
+  parts: AdminCoursePart[];
+}
+
+export interface Video {
+  id: string;
+  title: string;
+  originalFilename: string;
+  mimeType: string;
+  sizeBytes: number;
+  durationSec: number | null;
+  status: 'pending' | 'ready' | 'failed';
+  createdAt: string;
+}
+
+export interface DeepSubmission {
+  id: string;
+  userId: string;
+  courseId: string;
+  courseSlug: string;
+  courseTitle: string;
+  inCredentialId: string;
+  supervisorName: string;
+  supervisorEmail: string;
+  supervisorText: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewNotes: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  submittedAt: string;
+  worker?: {
+    id: string;
+    username: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
+}
+
+export interface QuippyMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
 }

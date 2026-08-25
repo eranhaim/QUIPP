@@ -65,14 +65,49 @@ test.describe('Full learner flow: signup → onboarding → academy → earn cre
     await page.getByRole('button', { name: /start earning/i }).first().click();
     await page.waitForURL(/\/learn\/smart-ovens/, { timeout: 20_000 });
 
-    // Real world → Knowledge → Mastery Check
-    const forward = page.getByRole('button', { name: /forward|ready for the check/i });
-    // Walk two intro parts.
-    for (let i = 0; i < 2; i++) {
-      await forward.first().waitFor({ state: 'visible', timeout: 10_000 });
-      await forward.first().click();
+    // Real world → Video → Knowledge → Mastery Check
+    // We walk the intro parts by clicking whatever advance button is visible.
+    // The video part gates on 90% watched — we simulate by fast-forwarding
+    // the <video> element inside the Playwright browser once it exposes metadata.
+    for (let i = 0; i < 6; i++) {
+      const videoEl = page.locator('video');
+      if (await videoEl.count()) {
+        // Wait until the browser reports metadata so `duration` is a real number.
+        await page.waitForFunction(
+          () => {
+            const v = document.querySelector('video') as HTMLVideoElement | null;
+            return !!v && Number.isFinite(v.duration) && v.duration > 0;
+          },
+          { timeout: 20_000 },
+        ).catch(() => undefined);
+        await page.evaluate(() => {
+          const v = document.querySelector('video') as HTMLVideoElement | null;
+          if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return;
+          v.currentTime = Math.max(0, v.duration - 0.5);
+          v.dispatchEvent(new Event('timeupdate'));
+          v.dispatchEvent(new Event('ended'));
+        });
+      }
+
+      // If we're already at the mastery check, stop walking parts.
+      if (await page.getByText(/question 1 of 10/i).count()) break;
+
+      const advance = page.getByRole('button', {
+        name: /forward|ready for the check|start the check/i,
+      });
+      if (!(await advance.count())) break;
+      await advance.first().waitFor({ state: 'visible', timeout: 15_000 });
+      // If a video part still shows "Keep watching…", wait a beat and re-try.
+      const label = (await advance.first().textContent()) ?? '';
+      if (/keep watching/i.test(label)) {
+        await page.waitForTimeout(500);
+        i--;
+        continue;
+      }
+      await advance.first().click();
     }
-    await expect(page.getByText(/question 1 of 10/i)).toBeVisible({ timeout: 10_000 });
+
+    await expect(page.getByText(/question 1 of 10/i)).toBeVisible({ timeout: 15_000 });
     await snap(page, '06-quiz-q1', info);
 
     // ── ANSWER ALL 10 QUESTIONS CORRECTLY ─────────────────────────────

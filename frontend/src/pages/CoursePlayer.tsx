@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Quippy from '@/components/Quippy';
 import QuippSymbol from '@/components/QuippSymbol';
+import VideoPlayer from '@/components/VideoPlayer';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import type { Course, Enrollment, QuizResult, TagName, Tier } from '@/lib/types';
@@ -36,6 +37,7 @@ const CoursePlayer = () => {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
+  const [videoWatchedPct, setVideoWatchedPct] = useState<Record<string, number>>({});
 
   const courseQuery = useQuery({
     queryKey: ['course', slug],
@@ -176,6 +178,54 @@ const CoursePlayer = () => {
               </div>
               <Button className="w-full mt-6 rounded-full h-14 font-bold" onClick={advanceToNextPart}>
                 Forward →
+              </Button>
+            </motion.div>
+          )}
+
+          {currentPart?.type === 'video' && (
+            <motion.div
+              key="vd"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="bg-card rounded-3xl p-6 md:p-8">
+                <h1 className="text-2xl md:text-[32px] font-bold font-display text-card-foreground mb-4">
+                  {currentPart.title}
+                </h1>
+                {currentPart.content && (
+                  <p className="text-sm text-muted-foreground mb-4">{currentPart.content}</p>
+                )}
+                {currentPart.videoUrl ? (
+                  <VideoPlayer
+                    src={currentPart.videoUrl}
+                    mimeType={currentPart.videoMimeType}
+                    storageKey={`${slug}:${currentPart.partId}`}
+                    onWatchedPctChange={(pct) =>
+                      setVideoWatchedPct((s) => ({ ...s, [currentPart.partId]: pct }))
+                    }
+                  />
+                ) : (
+                  <p className="text-sm text-destructive">
+                    This video is not yet available. Skip to the next part or come back later.
+                  </p>
+                )}
+                <p className="mt-4 text-xs text-muted-foreground text-center">
+                  {currentPart.videoUrl
+                    ? `Watched ${videoWatchedPct[currentPart.partId] ?? 0}%`
+                    : 'Video pending upload.'}
+                </p>
+              </div>
+              <Button
+                className="w-full mt-6 rounded-full h-14 font-bold"
+                onClick={advanceToNextPart}
+                disabled={
+                  !!currentPart.videoUrl && (videoWatchedPct[currentPart.partId] ?? 0) < 90
+                }
+              >
+                {currentPart.videoUrl && (videoWatchedPct[currentPart.partId] ?? 0) < 90
+                  ? 'Keep watching…'
+                  : 'Forward →'}
               </Button>
             </motion.div>
           )}

@@ -7,7 +7,13 @@ export type CourseTier = (typeof COURSE_TIERS)[number];
 export const COURSE_STATUSES = ['published', 'coming_soon'] as const;
 export type CourseStatus = (typeof COURSE_STATUSES)[number];
 
-export const COURSE_PART_TYPES = ['real_world', 'knowledge', 'mastery_check', 'credential'] as const;
+export const COURSE_PART_TYPES = [
+  'real_world',
+  'knowledge',
+  'video',
+  'mastery_check',
+  'credential',
+] as const;
 export type CoursePartType = (typeof COURSE_PART_TYPES)[number];
 
 const masteryQuestionSchema = new Schema(
@@ -29,6 +35,13 @@ const coursePartSchema = new Schema(
     content: { type: String, default: '' },
     topics: { type: [String], default: [] },
     questions: { type: [masteryQuestionSchema], default: [] },
+    videoId: { type: Schema.Types.ObjectId, ref: 'Video', default: null },
+    /**
+     * Fallback direct video URL for seed content that has no S3 upload.
+     * Real admin-uploaded videos always use `videoId`. When both are set,
+     * `videoId` (presigned S3) wins.
+     */
+    directVideoUrl: { type: String, default: null },
   },
   { _id: false },
 );

@@ -24,6 +24,16 @@ const schema = z.object({
 
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('QUIPP <noreply@quipp.co>'),
+
+  // AWS S3 — optional at boot; video upload/playback fails cleanly if missing.
+  AWS_REGION: z.string().optional(),
+  AWS_S3_BUCKET: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+
+  // Anthropic — optional at boot; QUIPPY endpoint returns "warming up" if missing.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-20250514'),
 });
 
 const parsed = schema.safeParse(process.env);

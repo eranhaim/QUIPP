@@ -320,6 +320,16 @@ const Passport = () => {
                   Share
                 </Button>
               </div>
+
+              {isOwner && selectedCred.tier === 'IN' && !hasDeepFor(credentials, selectedCred) && (
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="w-full mt-3 rounded-full"
+                >
+                  <Link to={`/passport/deep/${selectedCred.id}`}>Submit for DEEP →</Link>
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>
@@ -334,6 +344,19 @@ const Row = ({ label, value }: { label: string; value: string }) => (
     <span className="text-foreground font-medium">{value}</span>
   </div>
 );
+
+/**
+ * Determine whether the user already has a DEEP credential covering the same
+ * equipment/tag as this IN credential. Used to hide the "Submit for DEEP"
+ * button when a DEEP was already earned or auto-issued.
+ */
+function hasDeepFor(all: Credential[], inCred: Credential): boolean {
+  return all.some(
+    (c) =>
+      c.tier === 'DEEP' &&
+      (c.tagName === inCred.tagName || c.courseSlug === `${inCred.courseSlug}-deep`),
+  );
+}
 
 function tagIcon(tag: TagName): string {
   switch (tag) {

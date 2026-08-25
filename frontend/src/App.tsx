@@ -18,6 +18,13 @@ import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import OperatorDashboard from "./pages/OperatorDashboard";
 import NotFound from "./pages/NotFound";
+import DeepSubmit from "./pages/DeepSubmit";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminCourses from "./pages/admin/AdminCourses";
+import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
+import AdminVideos from "./pages/admin/AdminVideos";
+import AdminDeepSubmissions from "./pages/admin/AdminDeepSubmissions";
+import QuippyChat from "./components/QuippyChat";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +110,15 @@ const App = () => (
               }
             />
 
+            <Route
+              path="/passport/deep/:credentialId"
+              element={
+                <ProtectedRoute>
+                  <DeepSubmit />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Operator-only routes */}
             <Route
               path="/operator"
@@ -121,6 +137,22 @@ const App = () => (
               }
             />
 
+            {/* Admin */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="courses" replace />} />
+              <Route path="courses" element={<AdminCourses />} />
+              <Route path="courses/:slug" element={<AdminCourseEditor />} />
+              <Route path="videos" element={<AdminVideos />} />
+              <Route path="deep-submissions" element={<AdminDeepSubmissions />} />
+            </Route>
+
             {/* Legacy redirects */}
             <Route path="/training" element={<Navigate to="/academy" replace />} />
             <Route path="/courses" element={<Navigate to="/academy" replace />} />
@@ -130,6 +162,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <QuippyChat />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
