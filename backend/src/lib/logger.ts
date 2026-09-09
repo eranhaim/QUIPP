@@ -1,9 +1,19 @@
 type LogLevel = 'info' | 'warn' | 'error';
 
+function sanitizeMessage(message: string): string {
+  return message
+    .replace(/(mongodb(?:\+srv)?:\/\/)[^@\s]+@/gi, '$1[redacted]@')
+    .replace(/(waInstance\d+\/[^/\s]+\/)[^/\s]+/gi, '$1[redacted]')
+    .slice(0, 1_000);
+}
+
 function safeMeta(meta: unknown): unknown {
   if (meta instanceof Error) {
+    const coded = meta as Error & { code?: unknown };
     return {
       errorName: meta.name,
+      errorMessage: sanitizeMessage(meta.message),
+      ...(coded.code === undefined ? {} : { errorCode: coded.code }),
     };
   }
   return meta;

@@ -328,6 +328,17 @@ export async function backfillProfiles(): Promise<void> {
 }
 
 export async function seedMarketplace(): Promise<void> {
+  // Remove the invalid pre-release index that combined two array fields.
+  // MongoDB allows each multikey index separately, but not parallel arrays.
+  try {
+    await Supplier.collection.dropIndex(
+      'approved_1_status_1_categories_1_serviceRegions_1',
+    );
+  } catch (error) {
+    const code = (error as { code?: number }).code;
+    if (code !== 27 && code !== 26) throw error;
+  }
+
   const supplierSeeds = [
     {
       slug: 'demo-kitchen-systems',

@@ -17,7 +17,9 @@ const supplierSchema = new Schema(
   { timestamps: true },
 );
 
-supplierSchema.index({ approved: 1, status: 1, categories: 1, serviceRegions: 1 });
+// MongoDB cannot build one compound multikey index across two array fields.
+supplierSchema.index({ approved: 1, status: 1, categories: 1 });
+supplierSchema.index({ approved: 1, status: 1, serviceRegions: 1 });
 
 export type SupplierDoc = InferSchemaType<typeof supplierSchema> & {
   _id: Schema.Types.ObjectId;
