@@ -8,6 +8,7 @@ import AuthAwareShell from '@/components/AuthAwareShell';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import TechScoreRing from '@/components/TechScoreRing';
 import CredentialPatch from '@/components/CredentialPatch';
+import RequestIntroductionDialog from '@/components/RequestIntroductionDialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
@@ -53,7 +54,7 @@ function fetchCredentials(username: string) {
 
 const Passport = () => {
   const { username = '' } = useParams();
-  const { profile: myProfile } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const [selectedCred, setSelectedCred] = useState<Credential | null>(null);
 
   const profileQuery = useQuery({
@@ -132,6 +133,14 @@ const Passport = () => {
           <Button className="rounded-full h-12 px-8 font-bold w-full max-w-xs" onClick={copyLink}>
             <Share2 className="w-4 h-4" /> Share Passport
           </Button>
+          {user && !isOwner && profile.visibilityStatus === 'open' ? (
+            <div className="mx-auto mt-3 max-w-xs">
+              <RequestIntroductionDialog
+                username={profile.username}
+                triggerClassName="h-12 w-full rounded-full"
+              />
+            </div>
+          ) : null}
         </motion.div>
       </section>
 

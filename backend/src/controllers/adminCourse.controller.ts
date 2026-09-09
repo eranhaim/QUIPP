@@ -1,7 +1,12 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { TAG_NAMES } from '../models/TechnologyTag.js';
-import { COURSE_TIERS, COURSE_STATUSES, COURSE_PART_TYPES } from '../models/Course.js';
+import {
+  COURSE_TIERS,
+  COURSE_STATUSES,
+  COURSE_PART_TYPES,
+  COURSE_VISIBILITIES,
+} from '../models/Course.js';
 import {
   adminCreateCourse,
   adminGetCourse,
@@ -49,6 +54,9 @@ const createSchema = z.object({
   retakeCooldownHours: z.number().int().min(0).optional(),
   techScoreContribution: z.number().int().min(0).optional(),
   status: z.enum(COURSE_STATUSES).optional(),
+  priceCents: z.number().int().min(0).optional(),
+  stripePriceId: z.string().trim().min(1).nullable().optional(),
+  visibility: z.enum(COURSE_VISIBILITIES).optional(),
   technicalCompetencies: z.array(z.string()).optional(),
   parts: z.array(partSchema).optional(),
 });

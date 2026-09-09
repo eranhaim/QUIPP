@@ -1,10 +1,14 @@
+import mongoose from 'mongoose';
 import { CourseEnrollment } from '../models/CourseEnrollment.js';
 import { Course } from '../models/Course.js';
-import { Credential } from '../models/Credential.js';
+import { CourseAssignment } from '../models/CourseAssignment.js';
+import { CourseAccessPack } from '../models/CourseAccessPack.js';
+import { Endorsement } from '../models/Endorsement.js';
+import { SeatAssignment } from '../models/SeatAssignment.js';
+import { WorkplaceLink } from '../models/WorkplaceLink.js';
 import { HttpError } from '../middleware/errorHandler.js';
-import { randomToken } from '../lib/crypto.js';
 import { gradeQuiz } from './course.service.js';
-import { refreshTechScore } from './profile.service.js';
+import { issueCourseCredential } from './credential.service.js';
 
 export interface PublicEnrollment {
   id: string;
@@ -25,16 +29,88 @@ export async function enrollInCourse(userId: string, slug: string): Promise<Publ
   const course = await Course.findOne({ slug: slug.toLowerCase() });
   if (!course) throw new HttpError(404, 'Course not found');
   if (course.status !== 'published') throw new HttpError(400, 'Course is not open for enrollment');
+  if (course.visibility === 'organization') {
+    const linked = await WorkplaceLink.exists({
+      workerId: userId,
+      operatorId: course.ownerOperatorId,
+      status: 'active',
+    });
+    if (!linked) throw new HttpError(403, 'This course is private to its organization');
+  }
 
   const existing = await CourseEnrollment.findOne({ userId, courseSlug: course.slug });
   if (existing) return toPublicEnrollment(existing, course);
 
-  const enrollment = await CourseEnrollment.create({
-    userId,
-    courseId: course._id,
-    courseSlug: course.slug,
-    sourceType: 'free',
-  });
+  if (course.priceCents === 0) {
+    const enrollment = await CourseEnrollment.create({
+      userId,
+      courseId: course._id,
+      courseSlug: course.slug,
+      sourceType: 'free',
+    });
+    return toPublicEnrollment(enrollment, course);
+  }
+
+  const dbSession = await mongoose.startSession();
+  let enrollment: InstanceType<typeof CourseEnrollment> | undefined;
+  try {
+    await dbSession.withTransaction(async () => {
+      const now = new Date();
+      const candidateSeats = await SeatAssignment.find({
+        workerId: userId,
+        courseId: course._id,
+        status: 'assigned',
+      })
+        .sort({ assignedAt: 1 })
+        .session(dbSession);
+      const packIds = candidateSeats.map((seat) => seat.packId);
+      const packs = await CourseAccessPack.find({
+        _id: { $in: packIds },
+        status: { $in: ['active', 'exhausted'] },
+        $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+      })
+        .select('_id')
+        .session(dbSession);
+      const validPackIds = new Set(packs.map((pack) => String(pack._id)));
+      const candidate = candidateSeats.find((seat) => validPackIds.has(String(seat.packId)));
+      if (!candidate) {
+        throw new HttpError(403, 'A valid assigned course seat is required');
+      }
+
+      const consumedSeat = await SeatAssignment.findOneAndUpdate(
+        { _id: candidate._id, status: 'assigned' },
+        { $set: { status: 'consumed', consumedAt: now } },
+        { new: true, session: dbSession },
+      );
+      if (!consumedSeat) throw new HttpError(409, 'Course seat was already consumed');
+
+      [enrollment] = await CourseEnrollment.create(
+        [
+          {
+            userId,
+            courseId: course._id,
+            courseSlug: course.slug,
+            sourceType: 'library',
+            sourceId: consumedSeat._id,
+            sourceOperatorId: consumedSeat.operatorId,
+          },
+        ],
+        { session: dbSession },
+      );
+      await CourseAssignment.updateOne(
+        {
+          operatorId: consumedSeat.operatorId,
+          workerId: userId,
+          courseId: course._id,
+        },
+        { $set: { status: 'in_progress', startedAt: enrollment.startedAt } },
+        { session: dbSession },
+      );
+    });
+  } finally {
+    await dbSession.endSession();
+  }
+  if (!enrollment) throw new HttpError(500, 'Could not create enrollment');
   return toPublicEnrollment(enrollment, course);
 }
 
@@ -66,6 +142,7 @@ export interface CompleteQuizResult {
   cooldownEndsAt: string | null;
   credentialId: string | null;
   verificationId: string | null;
+  credentialPendingReason: string | null;
   review: Array<{
     question: string;
     correctIndex: number;
@@ -107,35 +184,29 @@ export async function completeQuiz(
 
   let credentialId: string | null = null;
   let verificationId: string | null = null;
+  let credentialPendingReason: string | null = null;
 
   if (grade.passed) {
     enrollment.status = 'completed';
     enrollment.completedAt = new Date();
     enrollment.progressPct = 100;
 
-    const existingCred = await Credential.findOne({ userId, courseSlug: course.slug });
-    if (existingCred) {
-      credentialId = String(existingCred._id);
-      verificationId = existingCred.verificationId;
+    const hasApprovedEndorsement =
+      course.tier !== 'THERE' ||
+      Boolean(
+        await Endorsement.exists({
+          workerId: userId,
+          thereCourseId: course._id,
+          status: 'approved',
+        }),
+      );
+    if (hasApprovedEndorsement) {
+      const credential = await issueCourseCredential(userId, course, grade.scorePct);
+      credentialId = String(credential._id);
+      verificationId = credential.verificationId;
     } else {
-      const cred = await Credential.create({
-        userId,
-        courseId: course._id,
-        courseSlug: course.slug,
-        courseName: course.title,
-        tier: course.tier,
-        tagName: course.tagName,
-        provider: course.provider,
-        isManufacturer: course.isManufacturer,
-        techFocus: course.techFocus,
-        verificationId: `QUIPP-${randomToken(4).toUpperCase()}`,
-        quizScore: grade.scorePct,
-        skillsDemonstrated: course.technicalCompetencies,
-        techScoreContribution: course.techScoreContribution,
-      });
-      credentialId = String(cred._id);
-      verificationId = cred.verificationId;
-      await refreshTechScore(userId);
+      credentialPendingReason =
+        'Verified employer endorsement is required before a THERE credential can be issued.';
     }
   } else {
     enrollment.status = 'failed';
@@ -143,6 +214,39 @@ export async function completeQuiz(
   }
 
   await enrollment.save();
+
+  // Close the approval/quiz race: approval records its decision before checking
+  // completion, and a completing quiz rechecks after persisting the enrollment.
+  if (grade.passed && course.tier === 'THERE' && credentialPendingReason) {
+    const endorsement = await Endorsement.exists({
+      workerId: userId,
+      thereCourseId: course._id,
+      status: 'approved',
+    });
+    if (endorsement) {
+      const credential = await issueCourseCredential(userId, course, grade.scorePct);
+      credentialId = String(credential._id);
+      verificationId = credential.verificationId;
+      credentialPendingReason = null;
+    }
+  }
+
+  if (grade.passed && enrollment.completedAt) {
+    await CourseAssignment.updateMany(
+      {
+        workerId: userId,
+        courseId: course._id,
+        status: { $ne: 'completed' },
+      },
+      {
+        $set: {
+          status: 'completed',
+          startedAt: enrollment.startedAt,
+          completedAt: enrollment.completedAt,
+        },
+      },
+    );
+  }
 
   const cooldownEndsAt = enrollment.lastAttemptAt
     ? new Date(enrollment.lastAttemptAt.getTime() + cooldownMs).toISOString()
@@ -157,6 +261,7 @@ export async function completeQuiz(
     cooldownEndsAt: grade.passed ? null : cooldownEndsAt,
     credentialId,
     verificationId,
+    credentialPendingReason,
     review: grade.review,
   };
 }

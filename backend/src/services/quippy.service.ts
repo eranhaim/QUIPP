@@ -1,92 +1,57 @@
-import Anthropic from '@anthropic-ai/sdk';
 import type { Response } from 'express';
+import { Types } from 'mongoose';
 import { env } from '../config/env.js';
+import { getQuippyGraph } from '../agents/quippy/graph.js';
+import type {
+  QuippyChannel,
+  QuippyMode,
+  ModelUsage,
+} from '../agents/quippy/state.js';
+import { consumeAgentRateLimit } from '../models/AgentUsage.js';
 import { Conversation } from '../models/Conversation.js';
 import { Message } from '../models/Message.js';
-import { User } from '../models/User.js';
-import { WorkerTechDeclaration } from '../models/WorkerTechDeclaration.js';
-import { Credential } from '../models/Credential.js';
 import { HttpError } from '../middleware/errorHandler.js';
-
-let cached: Anthropic | null = null;
+import { logger } from '../lib/logger.js';
 
 export function isQuippyConfigured(): boolean {
   return Boolean(env.ANTHROPIC_API_KEY);
 }
 
-function client(): Anthropic {
-  if (!isQuippyConfigured()) {
-    throw new HttpError(503, 'QUIPPY is warming up — check back soon.');
-  }
-  if (cached) return cached;
-  cached = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY! });
-  return cached;
-}
-
-const SYSTEM_PROMPT = [
-  "You are QUIPPY, the Equipment Consultant inside QUIPP. QUIPP is a professional credentialing platform for hospitality workers.",
-  "Voice: short, active, confident, human. Never use exclamation marks. End every reply with a clear next step.",
-  "Scope: commercial kitchen and bar equipment, error codes, safe troubleshooting, when to stop and call a technician, and preventative care.",
-  "Boundaries: if the question is off-topic (payroll, immigration, medical, legal), say so plainly in one sentence and redirect to equipment.",
-  "Safety: never advise disabling interlocks, bypassing gas/electrical safety, or defeating burn/pressure protections. If you're unsure a step is safe, say so and route to a technician.",
-  "Style: don't invent error codes. If you don't recognise a model or code, say so and ask one clarifying question. Prefer numbered steps for procedures.",
-  "You remember the worker's declared equipment and credentials as context — use them to skip obvious questions.",
-].join('\n');
-
-export interface QuippyContext {
-  firstName: string | null;
-  declaredEquipment: Array<{ equipmentName: string; brand: string | null }>;
-  credentials: Array<{ title: string; tier: string }>;
-}
-
-async function buildContext(userId: string): Promise<QuippyContext> {
-  const [user, decls, creds] = await Promise.all([
-    User.findById(userId).select({ firstName: 1 }).lean(),
-    WorkerTechDeclaration.find({ userId })
-      .select({ equipmentName: 1, brand: 1 })
-      .limit(20)
-      .lean(),
-    Credential.find({ userId })
-      .select({ courseName: 1, tier: 1 })
-      .limit(20)
-      .lean(),
-  ]);
-  return {
-    firstName: user?.firstName ?? null,
-    declaredEquipment: decls.map((d) => ({
-      equipmentName: d.equipmentName,
-      brand: d.brand ?? null,
-    })),
-    credentials: creds.map((c) => ({
-      title: (c as unknown as { courseName: string }).courseName,
-      tier: (c as unknown as { tier: string }).tier,
-    })),
-  };
-}
-
-function contextBlock(ctx: QuippyContext): string {
-  const bits: string[] = [];
-  if (ctx.firstName) bits.push(`Worker: ${ctx.firstName}.`);
-  if (ctx.declaredEquipment.length) {
-    bits.push(
-      `Declared equipment: ${ctx.declaredEquipment
-        .map((d) => (d.brand ? `${d.brand} ${d.equipmentName}` : d.equipmentName))
-        .join(', ')}.`,
-    );
-  }
-  if (ctx.credentials.length) {
-    bits.push(
-      `Earned credentials: ${ctx.credentials.map((c) => `${c.title} (${c.tier})`).join(', ')}.`,
-    );
-  }
-  if (!bits.length) return '';
-  return `\n\n<worker_context>\n${bits.join(' ')}\n</worker_context>`;
-}
-
-async function getOrCreateConversation(userId: string) {
-  const existing = await Conversation.findOne({ userId });
+async function getOrCreateConversation(input: {
+  principalKey: string;
+  channel: QuippyChannel;
+  userId?: string;
+  mode?: QuippyMode;
+}) {
+  const existing = await Conversation.findOne({
+    principalKey: input.principalKey,
+    channel: input.channel,
+  }).sort({ lastMessageAt: -1 });
   if (existing) return existing;
-  return Conversation.create({ userId });
+  try {
+    return await Conversation.create({
+      principalKey: input.principalKey,
+      channel: input.channel,
+      mode: input.mode ?? 'general',
+      userId: input.userId ?? null,
+      title: 'QUIPPY',
+    });
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 11000
+    ) {
+      const raced = await Conversation.findOne({
+        principalKey: input.principalKey,
+        channel: input.channel,
+        mode: input.mode ?? 'general',
+      });
+      if (raced) return raced;
+    }
+    throw error;
+  }
 }
 
 export interface PublicMessage {
@@ -104,7 +69,11 @@ export async function fetchConversation(
   messages: PublicMessage[];
   configured: boolean;
 }> {
-  const conv = await getOrCreateConversation(userId);
+  const conv = await getOrCreateConversation({
+    userId,
+    principalKey: `user:${userId}`,
+    channel: 'web',
+  });
   const msgs = await Message.find({ conversationId: conv._id })
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -123,98 +92,284 @@ export async function fetchConversation(
   };
 }
 
-// In-memory rate limiter (30 msgs / hour / user). Sufficient for MVP; when we
-// scale beyond one server this moves to Redis or a persisted counter.
-const RATE_MAX = 30;
-const RATE_WINDOW_MS = 60 * 60 * 1000;
-const hits = new Map<string, number[]>();
-function checkRate(userId: string): void {
-  const now = Date.now();
-  const arr = hits.get(userId)?.filter((t) => now - t < RATE_WINDOW_MS) ?? [];
-  if (arr.length >= RATE_MAX) {
-    throw new HttpError(429, 'You have hit the QUIPPY chat limit. Try again in an hour.');
+export interface GenerateReplyInput {
+  userId?: string;
+  principalKey: string;
+  channel: QuippyChannel;
+  content: string;
+  externalMessageId?: string;
+  requestId?: string;
+}
+
+export interface GenerateReplyResult {
+  text: string;
+  metadata: {
+    conversationId: string;
+    intent: string;
+    tools: unknown[];
+    validationIssues: string[];
+    idempotentReplay: boolean;
+    modelUsage: ModelUsage | null;
+  };
+}
+
+async function findIdempotentReply(
+  channel: QuippyChannel,
+  externalMessageId: string,
+): Promise<GenerateReplyResult | null> {
+  const inbound = await Message.findOne({ channel, externalMessageId }).lean();
+  if (!inbound) return null;
+  const reply = await Message.findOne({
+    conversationId: inbound.conversationId,
+    role: 'assistant',
+    'toolMetadata.inReplyToExternalMessageId': externalMessageId,
+  }).lean();
+  if (!reply) return null;
+  const metadata =
+    (reply.toolMetadata as {
+      intent?: string;
+      tools?: unknown[];
+      validationIssues?: string[];
+      modelUsage?: ModelUsage | null;
+    } | null) ?? {};
+  return {
+    text: reply.content,
+    metadata: {
+      conversationId: String(reply.conversationId),
+      intent: metadata.intent ?? 'general',
+      tools: metadata.tools ?? [],
+      validationIssues: metadata.validationIssues ?? [],
+      idempotentReplay: true,
+      modelUsage: metadata.modelUsage ?? null,
+    },
+  };
+}
+
+export async function generateReply(
+  input: GenerateReplyInput,
+): Promise<GenerateReplyResult> {
+  const startedAt = performance.now();
+  const correlationId =
+    input.requestId ??
+    (input.externalMessageId ? `greenapi-message:${input.externalMessageId}` : 'untracked');
+  if (!isQuippyConfigured()) {
+    throw new HttpError(503, 'QUIPPY is warming up — check back soon.');
   }
-  arr.push(now);
-  hits.set(userId, arr);
+  const principalKey = input.principalKey.trim();
+  if (!principalKey) throw new HttpError(400, 'principalKey is required');
+  const trimmed = input.content.trim();
+  if (!trimmed) throw new HttpError(400, 'Message cannot be empty');
+  if (trimmed.length > 2000) throw new HttpError(400, 'Message is too long');
+
+  let inbound = input.externalMessageId
+    ? await Message.findOne({
+        channel: input.channel,
+        externalMessageId: input.externalMessageId,
+      })
+    : null;
+  if (input.externalMessageId) {
+    const replay = await findIdempotentReply(
+      input.channel,
+      input.externalMessageId,
+    );
+    if (replay) {
+      logger.info('quippy.execution.replayed', {
+        correlationId,
+        channel: input.channel,
+        conversationId: replay.metadata.conversationId,
+        latencyMs: Math.round((performance.now() - startedAt) * 100) / 100,
+      });
+      return replay;
+    }
+  }
+
+  if (!inbound && !(await consumeAgentRateLimit(principalKey))) {
+    throw new HttpError(
+      429,
+      'You have hit the QUIPPY chat limit. Try again in an hour.',
+    );
+  }
+
+  const conv = inbound
+    ? await Conversation.findOne({
+        _id: inbound.conversationId,
+        principalKey,
+        channel: input.channel,
+      })
+    : await getOrCreateConversation({
+        principalKey,
+        channel: input.channel,
+        userId: input.userId,
+      });
+  if (!conv) {
+    throw new HttpError(409, 'This external message belongs to another conversation.');
+  }
+
+  if (!inbound) {
+    try {
+      inbound = await Message.create({
+        conversationId: conv._id,
+        userId: input.userId ?? null,
+        channel: input.channel,
+        externalMessageId: input.externalMessageId ?? null,
+        role: 'user',
+        content: trimmed,
+        deliveryStatus: 'delivered',
+      });
+    } catch (error) {
+      if (
+        input.externalMessageId &&
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 11000
+      ) {
+        const replay = await findIdempotentReply(
+          input.channel,
+          input.externalMessageId,
+        );
+        if (replay) return replay;
+        throw new HttpError(409, 'This message is already being processed.');
+      }
+      throw error;
+    }
+  } else {
+    if (input.userId) inbound.userId = new Types.ObjectId(input.userId);
+    inbound.content = trimmed;
+    inbound.toolMetadata = null;
+    await inbound.save();
+  }
+
+  const priorRaw = await Message.find({ conversationId: conv._id })
+    .sort({ createdAt: -1 })
+    .limit(21)
+    .lean();
+  const history = priorRaw
+    .filter((message) => String(message._id) !== String(inbound._id))
+    .slice(0, 20)
+    .reverse()
+    .map((message) => ({
+      role: message.role as 'user' | 'assistant',
+      content: message.content,
+    }));
+
+  const graph = await getQuippyGraph();
+  let result;
+  logger.info('quippy.execution.started', {
+    correlationId,
+    channel: input.channel,
+    conversationId: String(conv._id),
+    inputCharacters: trimmed.length,
+    historyTurns: history.length,
+  });
+  try {
+    result = await graph.invoke(
+      {
+        principalKey,
+        userId: input.userId ?? null,
+        channel: input.channel,
+        mode: conv.mode as QuippyMode,
+        content: trimmed,
+        history,
+      },
+      {
+        configurable: {
+          thread_id: `${input.channel}:${principalKey}:${conv.mode}`,
+        },
+        recursionLimit: 10,
+      },
+    );
+  } catch (error) {
+    inbound.toolMetadata = {
+      processingError: error instanceof Error ? error.message : 'Unknown error',
+    };
+    await inbound.save();
+    logger.error('quippy.execution.failed', {
+      correlationId,
+      channel: input.channel,
+      conversationId: String(conv._id),
+      latencyMs: Math.round((performance.now() - startedAt) * 100) / 100,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    });
+    if (
+      error instanceof AggregateError &&
+      error.message.includes('checkpoint setup failed')
+    ) {
+      throw new HttpError(503, 'QUIPPY conversation persistence is unavailable.');
+    }
+    throw new HttpError(502, 'QUIPPY could not respond right now. Try again.');
+  }
+
+  const text = result.response.trim();
+  if (!text) throw new HttpError(502, 'QUIPPY returned an empty response.');
+  const toolMetadata = {
+    intent: result.intent,
+    tools: result.toolMetadata,
+    validationIssues: result.validationIssues,
+    modelUsage: result.modelUsage,
+    inReplyToExternalMessageId: input.externalMessageId ?? null,
+  };
+  await Message.create({
+    conversationId: conv._id,
+    userId: input.userId ?? null,
+    channel: input.channel,
+    role: 'assistant',
+    content: text,
+    toolMetadata,
+    deliveryStatus: input.channel === 'web' ? 'delivered' : 'pending',
+  });
+  conv.lastMessageAt = new Date();
+  await conv.save();
+
+  logger.info('quippy.execution.completed', {
+    correlationId,
+    channel: input.channel,
+    conversationId: String(conv._id),
+    intent: result.intent,
+    tools: result.toolMetadata.map((item) => ({
+      tool: item.tool,
+      authorized: item.authorized,
+      resultCount: item.resultCount ?? null,
+    })),
+    validationIssueCount: result.validationIssues.length,
+    outputCharacters: text.length,
+    latencyMs: Math.round((performance.now() - startedAt) * 100) / 100,
+    modelUsage: result.modelUsage,
+  });
+
+  return {
+    text,
+    metadata: {
+      conversationId: String(conv._id),
+      intent: result.intent,
+      tools: result.toolMetadata,
+      validationIssues: result.validationIssues,
+      idempotentReplay: false,
+      modelUsage: result.modelUsage,
+    },
+  };
 }
 
 /**
- * Stream a QUIPPY reply. Persists the user's message immediately, then streams
- * tokens to the response. On completion, persists the assistant message.
+ * Keep the existing web streaming contract. The controlled graph completes
+ * before headers are sent, then the validated final response is one text chunk.
  */
 export async function streamReply(
   userId: string,
   userContent: string,
   res: Response,
+  requestId?: string,
 ): Promise<void> {
-  if (!isQuippyConfigured()) {
-    throw new HttpError(503, 'QUIPPY is warming up — check back soon.');
-  }
-  checkRate(userId);
-  const trimmed = userContent.trim();
-  if (!trimmed) throw new HttpError(400, 'Message cannot be empty');
-  if (trimmed.length > 2000) throw new HttpError(400, 'Message is too long');
-
-  const conv = await getOrCreateConversation(userId);
-  await Message.create({
-    conversationId: conv._id,
+  const reply = await generateReply({
     userId,
-    role: 'user',
-    content: trimmed,
+    principalKey: `user:${userId}`,
+    channel: 'web',
+    content: userContent,
+    requestId,
   });
-
-  const priorRaw = await Message.find({ conversationId: conv._id })
-    .sort({ createdAt: -1 })
-    .limit(20)
-    .lean();
-  const prior = priorRaw.reverse();
-  const ctx = await buildContext(userId);
-
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('X-Accel-Buffering', 'no');
-
-  let assembled = '';
-  try {
-    const stream = await client().messages.stream({
-      model: env.ANTHROPIC_MODEL,
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT + contextBlock(ctx),
-      messages: prior.map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })),
-    });
-
-    for await (const chunk of stream) {
-      if (
-        chunk.type === 'content_block_delta' &&
-        chunk.delta.type === 'text_delta' &&
-        chunk.delta.text
-      ) {
-        assembled += chunk.delta.text;
-        res.write(chunk.delta.text);
-      }
-    }
-    await stream.finalMessage();
-  } catch (err) {
-    if (!assembled) {
-      throw new HttpError(502, 'QUIPPY could not respond right now. Try again.');
-    }
-    // Partial reply is still useful; log server-side and continue.
-    // eslint-disable-next-line no-console
-    console.error('QUIPPY stream error after partial delivery', err);
-  }
-
-  if (assembled.trim()) {
-    await Message.create({
-      conversationId: conv._id,
-      userId,
-      role: 'assistant',
-      content: assembled,
-    });
-    conv.lastMessageAt = new Date();
-    await conv.save();
-  }
+  res.write(reply.text);
   res.end();
 }

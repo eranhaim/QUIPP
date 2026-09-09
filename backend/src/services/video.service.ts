@@ -100,6 +100,40 @@ export async function listVideos(): Promise<PublicVideo[]> {
   return docs.map((d) => toPublic(d as unknown as VideoDoc));
 }
 
+export async function listVideosForUser(userId: string): Promise<PublicVideo[]> {
+  const docs = await Video.find({ uploadedBy: userId }).sort({ createdAt: -1 }).lean();
+  return docs.map((d) => toPublic(d as unknown as VideoDoc));
+}
+
+export async function markOwnedVideoReady(
+  id: string,
+  userId: string,
+  durationSec?: number,
+): Promise<PublicVideo> {
+  const update: Record<string, unknown> = { status: 'ready' };
+  if (typeof durationSec === 'number' && durationSec > 0) {
+    update.durationSec = Math.round(durationSec);
+  }
+  const doc = await Video.findOneAndUpdate({ _id: id, uploadedBy: userId }, update, {
+    new: true,
+  });
+  if (!doc) throw new HttpError(404, 'Video not found');
+  return toPublic(doc as unknown as VideoDoc);
+}
+
+export async function removeOwnedVideo(id: string, userId: string): Promise<void> {
+  const doc = await Video.findOne({ _id: id, uploadedBy: userId });
+  if (!doc) throw new HttpError(404, 'Video not found');
+  if (isS3Configured()) {
+    try {
+      await deleteObject(doc.s3Key);
+    } catch {
+      // Keep deletion usable if S3 is temporarily unavailable.
+    }
+  }
+  await doc.deleteOne();
+}
+
 export async function getVideo(id: string): Promise<PublicVideo> {
   const doc = await Video.findById(id).lean();
   if (!doc) throw new HttpError(404, 'Video not found');

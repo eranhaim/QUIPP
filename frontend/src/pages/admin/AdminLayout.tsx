@@ -1,11 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BookOpen, Film, ShieldCheck, ArrowLeft, LogOut } from 'lucide-react';
+import { BookOpen, ClipboardList, Film, ShieldCheck, ArrowLeft, LogOut, Store } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const NAV_ITEMS = [
   { to: '/admin/courses', label: 'Courses', Icon: BookOpen },
+  { to: '/admin/course-reviews', label: 'Course reviews', Icon: ClipboardList },
   { to: '/admin/videos', label: 'Videos', Icon: Film },
   { to: '/admin/deep-submissions', label: 'DEEP queue', Icon: ShieldCheck },
+  { to: '/admin/marketplace', label: 'Marketplace', Icon: Store },
 ] as const;
 
 const AdminLayout = () => {

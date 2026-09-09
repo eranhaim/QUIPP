@@ -24,21 +24,18 @@ test.describe('Full learner flow: signup → onboarding → academy → earn cre
     await page.waitForURL(/\/onboarding|\/home/, { timeout: 20_000 });
     await snap(page, '01-post-signup', info);
 
-    // ── ONBOARDING (5 screens) ─────────────────────────────────────────
+    // ── CONVERSATIONAL ONBOARDING (4 screens) ──────────────────────────
     if (page.url().includes('/onboarding')) {
-      // Screen 1: welcome → "Start"
-      await page.getByRole('button', { name: /^start$/i }).click();
-      // Screen 2: value props → "Forward →"
-      await page.getByRole('button', { name: /forward/i }).click();
-      // Screen 3: role select → click "Kitchen" → "This is me"
-      // The button's accessible name is "🔥 Kitchen" (emoji + label), so use contains.
-      await page.getByRole('button', { name: /kitchen/i }).click();
+      // Choose the worker Passport conversation.
+      await page.getByRole('button', { name: /my professional passport/i }).click();
       await page.getByRole('button', { name: /this is me/i }).click();
-      // Screen 4: equipment → "These are mine" (skip picking any for speed)
-      await page.getByRole('button', { name: /these are mine/i }).click();
-      // Screen 5: preview → "Start earning"
+      // Choose a role.
+      await page.getByRole('button', { name: /kitchen/i }).click();
+      await page.getByRole('button', { name: /keep going/i }).click();
+      // Equipment is optional, so continue to the preview without selecting any.
+      await page.getByRole('button', { name: /keep going/i }).click();
       await snap(page, '02-onboarding', info);
-      await page.getByRole('button', { name: /start earning/i }).click();
+      await page.getByRole('button', { name: /build my passport/i }).click();
       await page.waitForURL(/\/home/, { timeout: 20_000 });
     }
 
@@ -50,13 +47,18 @@ test.describe('Full learner flow: signup → onboarding → academy → earn cre
     // ── ACADEMY ───────────────────────────────────────────────────────
     await page.goto('/academy');
     await expect(page.getByRole('heading', { name: /every credential/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /smart ovens/i }).first()).toBeVisible({ timeout: 15_000 });
+    // Match by href — the accessible name of each course card includes the
+    // provider, title, description and duration, and we specifically want the
+    // IN-tier "Smart Ovens" (not "smart-ovens-deep").
+    const smartOvensLink = page.locator('a[href="/training/smart-ovens"]');
+    await expect(smartOvensLink.first()).toBeVisible({ timeout: 15_000 });
+    await smartOvensLink.first().scrollIntoViewIfNeeded();
     await snap(page, '04-academy', info);
     await scan('academy');
 
     // ── COURSE DETAIL ─────────────────────────────────────────────────
-    await page.getByRole('link', { name: /smart ovens/i }).first().click();
-    await page.waitForURL(/\/training\/smart-ovens/);
+    await smartOvensLink.first().click();
+    await page.waitForURL(/\/training\/smart-ovens$/, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: /smart ovens/i })).toBeVisible();
     await snap(page, '05-course-detail', info);
     await scan('course-detail');
@@ -69,45 +71,44 @@ test.describe('Full learner flow: signup → onboarding → academy → earn cre
     // We walk the intro parts by clicking whatever advance button is visible.
     // The video part gates on 90% watched — we simulate by fast-forwarding
     // the <video> element inside the Playwright browser once it exposes metadata.
-    for (let i = 0; i < 6; i++) {
-      const videoEl = page.locator('video');
-      if (await videoEl.count()) {
-        // Wait until the browser reports metadata so `duration` is a real number.
-        await page.waitForFunction(
-          () => {
-            const v = document.querySelector('video') as HTMLVideoElement | null;
-            return !!v && Number.isFinite(v.duration) && v.duration > 0;
-          },
-          { timeout: 20_000 },
-        ).catch(() => undefined);
-        await page.evaluate(() => {
-          const v = document.querySelector('video') as HTMLVideoElement | null;
-          if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return;
-          v.currentTime = Math.max(0, v.duration - 0.5);
-          v.dispatchEvent(new Event('timeupdate'));
-          v.dispatchEvent(new Event('ended'));
-        });
-      }
+    for (let i = 0; i < 8; i++) {
+      // Let framer-motion animations settle before we inspect the DOM.
+      await page.waitForTimeout(700);
 
       // If we're already at the mastery check, stop walking parts.
       if (await page.getByText(/question 1 of 10/i).count()) break;
 
+      const videoEl = page.locator('video');
+      if (await videoEl.count()) {
+        // Reach into React's internal props on the <video> element and call
+        // onEnded directly. Dispatching a native 'ended' event is unreliable
+        // in React because media events don't bubble; delegated listeners
+        // may miss synthetic dispatches. Calling the prop function is stable.
+        await page.evaluate(() => {
+          const v = document.querySelector('video') as (HTMLVideoElement & Record<string, unknown>) | null;
+          if (!v) return;
+          const key = Object.keys(v).find((k) => k.startsWith('__reactProps$'));
+          if (!key) return;
+          const props = v[key] as { onEnded?: (e: unknown) => void; onTimeUpdate?: (e: unknown) => void };
+          Object.defineProperty(v, 'duration', { configurable: true, get: () => 10 });
+          Object.defineProperty(v, 'currentTime', { configurable: true, get: () => 10 });
+          props.onTimeUpdate?.({ target: v, currentTarget: v });
+          props.onEnded?.({ target: v, currentTarget: v });
+        });
+        await page.waitForTimeout(300);
+      }
+
       const advance = page.getByRole('button', {
-        name: /forward|ready for the check|start the check/i,
+        name: /forward|ready for the check|start the check|keep watching/i,
       });
       if (!(await advance.count())) break;
       await advance.first().waitFor({ state: 'visible', timeout: 15_000 });
-      // If a video part still shows "Keep watching…", wait a beat and re-try.
-      const label = (await advance.first().textContent()) ?? '';
-      if (/keep watching/i.test(label)) {
-        await page.waitForTimeout(500);
-        i--;
-        continue;
-      }
-      await advance.first().click();
+      // force:true bypasses "element is stable" which can flap during the
+      // AnimatePresence enter/exit animation on framer-motion parts.
+      await advance.first().click({ force: true });
     }
 
-    await expect(page.getByText(/question 1 of 10/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/question 1 of 10/i)).toBeVisible({ timeout: 20_000 });
     await snap(page, '06-quiz-q1', info);
 
     // ── ANSWER ALL 10 QUESTIONS CORRECTLY ─────────────────────────────

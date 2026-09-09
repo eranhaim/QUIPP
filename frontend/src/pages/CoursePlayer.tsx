@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import Quippy from '@/components/Quippy';
@@ -344,7 +344,49 @@ const CoursePlayer = () => {
             </motion.div>
           )}
 
-          {currentPart?.type === 'mastery_check' && result?.passed && (
+          {currentPart?.type === 'mastery_check' &&
+            result?.passed &&
+            result.credentialPendingReason && (
+              <motion.div
+                key="pass-pending-endorsement"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="py-8 text-center"
+              >
+                <div className="rounded-3xl bg-card p-8">
+                  <CheckCircle2 className="mx-auto h-14 w-14 text-primary" aria-hidden />
+                  <h2 className="mt-4 text-2xl font-bold font-display">
+                    Course passed
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    You scored {result.scorePct}% and completed the THERE course. Your credential
+                    waits for a verified employer endorsement before it can be issued.
+                  </p>
+                  <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-primary/10 p-4 text-sm font-semibold text-primary">
+                    <Clock3 className="h-5 w-5" aria-hidden />
+                    Credential pending employer verification
+                  </div>
+                </div>
+                <div className="mt-6 flex flex-col gap-3">
+                  <Button asChild size="lg" className="h-14 rounded-full font-bold">
+                    <Link to="/workplace">Request or view endorsement</Link>
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="h-14 rounded-full"
+                    onClick={() => navigate('/academy')}
+                  >
+                    Back to Academy
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+          {currentPart?.type === 'mastery_check' &&
+            result?.passed &&
+            !result.credentialPendingReason && (
             <motion.div
               key="pass"
               initial={{ opacity: 0, y: 16 }}

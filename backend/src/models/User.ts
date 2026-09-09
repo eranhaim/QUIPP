@@ -1,6 +1,6 @@
 import { Schema, model, type InferSchemaType } from 'mongoose';
 
-export const APP_ROLES = ['worker', 'operator', 'manufacturer', 'admin'] as const;
+export const APP_ROLES = ['worker', 'operator', 'manufacturer', 'supplier', 'admin'] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 const userSchema = new Schema(

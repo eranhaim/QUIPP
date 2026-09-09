@@ -3,6 +3,21 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const optionalNonEmptyString = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z.string().trim().min(1).optional(),
+);
+
+const optionalBoolean = z.preprocess(
+  (value) => {
+    if (value === undefined || value === '') return false;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  },
+  z.boolean(),
+);
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -25,6 +40,11 @@ const schema = z.object({
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('QUIPP <noreply@quipp.co>'),
 
+  // Stripe — optional at boot; checkout/webhooks fail cleanly if missing.
+  STRIPE_SECRET_KEY: optionalNonEmptyString,
+  STRIPE_WEBHOOK_SECRET: optionalNonEmptyString,
+  STRIPE_CURRENCY: z.string().trim().min(3).max(3).toLowerCase().default('cad'),
+
   // AWS S3 — optional at boot; video upload/playback fails cleanly if missing.
   AWS_REGION: z.string().optional(),
   AWS_S3_BUCKET: z.string().optional(),
@@ -34,6 +54,13 @@ const schema = z.object({
   // Anthropic — optional at boot; QUIPPY endpoint returns "warming up" if missing.
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-20250514'),
+
+  // GreenAPI — optional at boot. The worker only starts when enabled and fully configured.
+  GREEN_API_ID_INSTANCE: optionalNonEmptyString,
+  GREEN_API_TOKEN_INSTANCE: optionalNonEmptyString,
+  GREEN_API_API_URL: z.string().url().default('https://api.green-api.com'),
+  GREEN_API_WEBHOOK_TOKEN: optionalNonEmptyString,
+  GREEN_API_ENABLED: optionalBoolean,
 });
 
 const parsed = schema.safeParse(process.env);

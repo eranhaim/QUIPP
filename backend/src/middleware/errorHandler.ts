@@ -12,7 +12,7 @@ export class HttpError extends Error {
   }
 }
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof HttpError) {
     res.status(err.status).json({ error: err.message, ...(err.data ?? {}) });
     return;
@@ -24,6 +24,9 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     });
     return;
   }
-  logger.error('Unhandled error', err);
+  logger.error('http.request.unhandled_error', {
+    requestId: req.requestId,
+    errorName: err instanceof Error ? err.name : 'UnknownError',
+  });
   res.status(500).json({ error: 'Internal server error' });
 };

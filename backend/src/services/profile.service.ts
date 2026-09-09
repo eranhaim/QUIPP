@@ -114,7 +114,9 @@ export async function getMyProfile(userId: string): Promise<PublicProfile> {
 
 export async function getProfileByUsername(username: string): Promise<PublicProfile> {
   const profile = await Profile.findOne({ username: username.toLowerCase() });
-  if (!profile) throw new HttpError(404, 'Profile not found');
+  if (!profile || profile.visibilityStatus === 'private') {
+    throw new HttpError(404, 'Profile not found');
+  }
   return assemblePublicProfile(profile.toObject() as never);
 }
 

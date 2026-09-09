@@ -4,6 +4,9 @@ import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
 import { createProfileForUser } from './profile.service.js';
 import { logger } from '../lib/logger.js';
+import { Supplier } from '../models/Supplier.js';
+import { Product } from '../models/Product.js';
+import { AffiliateOffer } from '../models/AffiliateOffer.js';
 
 const TAGS: Array<{ tagName: TagName; label: string; icon: string; description: string }> = [
   { tagName: 'THERMAL', label: 'Thermal', icon: '🔥', description: 'Ovens, fryers, grills, salamanders — anything that runs hot.' },
@@ -53,19 +56,19 @@ interface SeedCourse {
  * Publicly-hosted sample MP4 URLs used only for seed content so a fresh clone
  * can render the video part before real admin uploads exist. Real courses use
  * `videoId` referencing S3-uploaded Video documents.
+ *
+ * These are intentionally short (<= 15s, <= 2 MB) so the 90 %-watched gate
+ * lifts within seconds and Playwright tests can finish quickly.
  */
 const SAMPLE_VIDEOS = {
-  bigBuckBunny: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  elephantsDream:
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-  forBiggerBlazes:
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  forBiggerFun:
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-  forBiggerJoyrides:
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-  forBiggerMeltdowns:
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+  flower:
+    'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  friday:
+    'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
+  smallBunny: 'https://www.w3schools.com/html/mov_bbb.mp4',
+  smallMovie: 'https://www.w3schools.com/html/movie.mp4',
+  smallOceans: 'https://download.samplelib.com/mp4/sample-5s.mp4',
+  smallSea: 'https://download.samplelib.com/mp4/sample-10s.mp4',
 } as const;
 
 const COMBI_QUESTIONS: SeedQuestion[] = [
@@ -157,7 +160,7 @@ const COURSES: SeedCourse[] = [
     ],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: "The combi oven is in 90% of serious kitchens. Once you know this machine, you're untouchable." },
-      { partId: 'p2', type: 'video', title: 'Watch: combi oven basics', duration: '2 min', content: 'A quick tour of the modes and controls.', directVideoUrl: SAMPLE_VIDEOS.bigBuckBunny },
+      { partId: 'p2', type: 'video', title: 'Watch: combi oven basics', duration: '2 min', content: 'A quick tour of the modes and controls.', directVideoUrl: SAMPLE_VIDEOS.flower },
       { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '15 min', content: 'Master the combi oven inside and out.', topics: ['What is a combi oven and why it exists', 'The three cooking modes (steam / convection / combination)', 'Temperature and humidity control', 'Cleaning cycles and maintenance', 'Common mistakes and how to avoid them'] },
       { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: COMBI_QUESTIONS },
       { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your Smart Ovens credential. Earned. Yours.' },
@@ -180,7 +183,7 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Grinder calibration', 'Extraction timing', 'Milk texturing', 'Cleaning protocols'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'Every coffee programme depends on the barista who runs the machine.' },
-      { partId: 'p2', type: 'video', title: 'Watch: pulling the perfect shot', duration: '2 min', content: 'Extraction principles in action.', directVideoUrl: SAMPLE_VIDEOS.elephantsDream },
+      { partId: 'p2', type: 'video', title: 'Watch: pulling the perfect shot', duration: '2 min', content: 'Extraction principles in action.', directVideoUrl: SAMPLE_VIDEOS.friday },
       { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master espresso operations end to end.', topics: ['Grinder calibration', 'Dose and distribution', 'Extraction timing', 'Milk texturing', 'Cleaning and maintenance'] },
       { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: ESPRESSO_QUESTIONS },
       { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your Commercial Espresso credential. Earned. Yours.' },
@@ -203,7 +206,7 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Order management', 'Payment processing', 'Table management', 'Reporting'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'The POS is the nerve center of every restaurant.' },
-      { partId: 'p2', type: 'video', title: 'Watch: order flow on the POS', duration: '2 min', content: 'From tap to KDS in one shot.', directVideoUrl: SAMPLE_VIDEOS.forBiggerBlazes },
+      { partId: 'p2', type: 'video', title: 'Watch: order flow on the POS', duration: '2 min', content: 'From tap to KDS in one shot.', directVideoUrl: SAMPLE_VIDEOS.smallBunny },
       { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master POS operations end to end.', topics: ['Order management and modifiers', 'Payment processing', 'Table management', 'Reporting and daily close', 'Troubleshooting common issues'] },
       { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this system. 80% to pass.', questions: POS_QUESTIONS },
       { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your POS Systems credential. Earned. Yours.' },
@@ -226,7 +229,7 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Danger zone management', 'Blast chill cycles', 'HACCP compliance', 'Equipment maintenance'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'Blast chillers prevent the danger zone. Every kitchen needs a cook who knows this.' },
-      { partId: 'p2', type: 'video', title: 'Watch: chilling through the danger zone', duration: '2 min', content: 'How rapid cooling works.', directVideoUrl: SAMPLE_VIDEOS.forBiggerFun },
+      { partId: 'p2', type: 'video', title: 'Watch: chilling through the danger zone', duration: '2 min', content: 'How rapid cooling works.', directVideoUrl: SAMPLE_VIDEOS.smallMovie },
       { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '10 min', content: 'Master blast chilling operations.', topics: ['Temperature danger zone', 'Blast chilling vs slow cooling', 'Shock freezing', 'HACCP compliance', 'Maintenance protocols'] },
       { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know this equipment. 80% to pass.', questions: BLAST_CHILLER_QUESTIONS },
       { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your Blast Chillers credential. Earned. Yours.' },
@@ -249,7 +252,7 @@ const COURSES: SeedCourse[] = [
     technicalCompetencies: ['Reservation systems', 'Tableside ordering', 'Delivery integration', 'Guest experience tech'],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'The Real World', duration: '3 min', content: 'Guests interact with technology before they interact with you. Know the tools.' },
-      { partId: 'p2', type: 'video', title: 'Watch: the guest journey on FOH tech', duration: '2 min', content: 'From reservation to receipt.', directVideoUrl: SAMPLE_VIDEOS.forBiggerJoyrides },
+      { partId: 'p2', type: 'video', title: 'Watch: the guest journey on FOH tech', duration: '2 min', content: 'From reservation to receipt.', directVideoUrl: SAMPLE_VIDEOS.smallOceans },
       { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '12 min', content: 'Master front-of-house technology.', topics: ['Reservation systems', 'Tableside ordering', 'Guest-facing displays', 'Delivery platform integration', 'Tech-enhanced service flow'] },
       { partId: 'p4', type: 'mastery_check', title: 'The Mastery Check', duration: '10 questions', content: 'Prove you know FOH tech. 80% to pass.', questions: FOH_QUESTIONS },
       { partId: 'p5', type: 'credential', title: 'The Credential', duration: '', content: 'Your FOH Tech credential. Earned. Yours.' },
@@ -279,7 +282,7 @@ const COURSES: SeedCourse[] = [
     ],
     parts: [
       { partId: 'p1', type: 'real_world', title: 'From operator to programmer', duration: '3 min', content: 'DEEP means you can build, document, and defend a programme — not just run one.' },
-      { partId: 'p2', type: 'video', title: 'Watch: programming a multi-step cook', duration: '3 min', content: 'A walkthrough of a real service programme.', directVideoUrl: SAMPLE_VIDEOS.forBiggerMeltdowns },
+      { partId: 'p2', type: 'video', title: 'Watch: programming a multi-step cook', duration: '3 min', content: 'A walkthrough of a real service programme.', directVideoUrl: SAMPLE_VIDEOS.smallSea },
       { partId: 'p3', type: 'knowledge', title: 'The Knowledge', duration: '15 min', content: 'What separates DEEP from IN.', topics: ['Multi-step programme design', 'Delta-T cooking and core probes', 'HACCP documentation from the combi', 'Preventative maintenance schedules', 'Coaching an IN-level cook'] },
       { partId: 'p4', type: 'credential', title: 'Your DEEP credential', duration: '', content: 'Auto-issued once your supervisor confirmation is approved.' },
     ],
@@ -324,8 +327,124 @@ export async function backfillProfiles(): Promise<void> {
   logger.info(`Back-filled ${created} profile(s)`);
 }
 
+export async function seedMarketplace(): Promise<void> {
+  const supplierSeeds = [
+    {
+      slug: 'demo-kitchen-systems',
+      companyName: 'Demo Kitchen Systems',
+      approved: true,
+      serviceRegions: ['London', 'Manchester'],
+      categories: ['Combi ovens', 'Blast chillers'],
+      websiteUrl: 'https://example.com/demo-kitchen-systems',
+      contactEmail: 'demo-kitchen@example.com',
+      status: 'active',
+    },
+    {
+      slug: 'demo-hospitality-digital',
+      companyName: 'Demo Hospitality Digital',
+      approved: true,
+      serviceRegions: ['London', 'Birmingham', 'Manchester'],
+      categories: ['POS systems'],
+      websiteUrl: 'https://example.com/demo-hospitality-digital',
+      contactEmail: 'demo-digital@example.com',
+      status: 'active',
+    },
+  ] as const;
+  const suppliers = new Map<string, InstanceType<typeof Supplier>>();
+  for (const seed of supplierSeeds) {
+    const supplier = await Supplier.findOneAndUpdate(
+      { slug: seed.slug },
+      { $set: seed },
+      { upsert: true, new: true },
+    );
+    suppliers.set(seed.slug, supplier);
+  }
+  const now = new Date('2026-09-01T00:00:00.000Z');
+  const productSeeds = [
+    {
+      supplierSlug: 'demo-kitchen-systems',
+      slug: 'demo-compact-combi-6',
+      name: 'Demo Compact Combi 6',
+      category: 'Combi ovens',
+      brand: 'DemoChef',
+      model: 'DC-C6',
+      description:
+        'Unverified demonstration listing for a compact six-tray electric combi oven. Not a real partnership or recommendation.',
+      specifications: { capacity: '6 trays', power: 'Electric', width: '750 mm (demo)' },
+      regions: ['London', 'Manchester'],
+      priceMinCents: 650000,
+      priceMaxCents: 820000,
+      currency: 'USD',
+      sourceUrl: 'https://example.com/demo-products/compact-combi-6',
+      sourceUpdatedAt: now,
+      active: true,
+    },
+    {
+      supplierSlug: 'demo-kitchen-systems',
+      slug: 'demo-rapid-chill-10',
+      name: 'Demo Rapid Chill 10',
+      category: 'Blast chillers',
+      brand: 'DemoChef',
+      model: 'DC-RC10',
+      description:
+        'Unverified demonstration listing for a ten-tray blast chiller. Confirm all capacity and HACCP claims independently.',
+      specifications: { capacity: '10 trays', refrigerant: 'Unverified demo', footprint: '800 × 850 mm (demo)' },
+      regions: ['London', 'Manchester'],
+      priceMinCents: 540000,
+      priceMaxCents: 700000,
+      currency: 'USD',
+      sourceUrl: 'https://example.com/demo-products/rapid-chill-10',
+      sourceUpdatedAt: now,
+      active: true,
+    },
+    {
+      supplierSlug: 'demo-hospitality-digital',
+      slug: 'demo-service-pos',
+      name: 'Demo Service POS',
+      category: 'POS systems',
+      brand: 'DemoServe',
+      model: 'DS-POS',
+      description:
+        'Unverified demonstration listing for a cloud POS package. Pricing and integrations are illustrative only.',
+      specifications: { terminals: '2 (demo package)', deployment: 'Cloud', support: 'Illustrative only' },
+      regions: ['London', 'Birmingham', 'Manchester'],
+      priceMinCents: 120000,
+      priceMaxCents: 240000,
+      currency: 'USD',
+      sourceUrl: 'https://example.com/demo-products/service-pos',
+      sourceUpdatedAt: now,
+      active: true,
+    },
+  ];
+  for (const seed of productSeeds) {
+    const supplier = suppliers.get(seed.supplierSlug)!;
+    const { supplierSlug: _supplierSlug, ...productSeed } = seed;
+    const product = await Product.findOneAndUpdate(
+      { slug: seed.slug },
+      { $set: { ...productSeed, supplierId: supplier._id } },
+      { upsert: true, new: true },
+    );
+    await AffiliateOffer.findOneAndUpdate(
+      { productId: product._id, supplierId: supplier._id },
+      {
+        $set: {
+          destinationUrl: `https://example.com/demo-affiliate/${seed.slug}`,
+          disclosureLabel: 'Affiliate link · QUIPP may earn a commission',
+          commissionType: 'unknown',
+          commissionAmount: null,
+          active: true,
+          priority: 0,
+        },
+      },
+      { upsert: true, new: true },
+    );
+  }
+  logger.info(`Seeded ${supplierSeeds.length} demo suppliers and ${productSeeds.length} demo products`);
+}
+
 export async function seedAll(): Promise<void> {
   await seedTaxonomy();
   await seedCourses();
+  await seedMarketplace();
   await backfillProfiles();
 }

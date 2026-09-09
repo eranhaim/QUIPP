@@ -4,6 +4,8 @@ import { adminRequired } from '../middleware/adminRequired.js';
 import * as videos from '../controllers/video.controller.js';
 import * as courses from '../controllers/adminCourse.controller.js';
 import * as deep from '../controllers/deepSubmission.controller.js';
+import * as courseReviews from '../controllers/courseReview.controller.js';
+import * as marketplace from '../controllers/adminMarketplace.controller.js';
 
 const router = Router();
 
@@ -14,6 +16,12 @@ router.post('/courses', asyncHandler(courses.create));
 router.get('/courses/:slug', asyncHandler(courses.detail));
 router.patch('/courses/:slug', asyncHandler(courses.update));
 router.post('/courses/:slug/status', asyncHandler(courses.setStatus));
+router.get('/course-reviews', asyncHandler(courseReviews.list));
+router.post('/course-reviews/:id/approve', asyncHandler(courseReviews.approve));
+router.post(
+  '/course-reviews/:id/request-changes',
+  asyncHandler(courseReviews.requestChanges),
+);
 
 router.get('/videos', asyncHandler(videos.list));
 router.post('/videos', asyncHandler(videos.create));
@@ -24,5 +32,13 @@ router.get('/videos/:id/playback', asyncHandler(videos.playback));
 router.get('/deep-submissions', asyncHandler(deep.listPending));
 router.post('/deep-submissions/:id/approve', asyncHandler(deep.approve));
 router.post('/deep-submissions/:id/reject', asyncHandler(deep.reject));
+
+router.get('/marketplace', asyncHandler(marketplace.overview));
+router.post('/marketplace/suppliers', asyncHandler(marketplace.createSupplier));
+router.patch('/marketplace/suppliers/:id', asyncHandler(marketplace.updateSupplier));
+router.post('/marketplace/products', asyncHandler(marketplace.createProduct));
+router.patch('/marketplace/products/:id', asyncHandler(marketplace.updateProduct));
+router.post('/marketplace/offers', asyncHandler(marketplace.createOffer));
+router.patch('/marketplace/offers/:id', asyncHandler(marketplace.updateOffer));
 
 export default router;

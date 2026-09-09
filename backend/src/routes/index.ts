@@ -10,6 +10,14 @@ import tags from './tags.js';
 import admin from './admin.js';
 import deepSubmissions from './deepSubmissions.js';
 import quippy from './quippy.js';
+import operator from './operator.js';
+import endorsements from './endorsements.js';
+import webhooks from './webhooks.js';
+import discovery from './discovery.js';
+import introductions from './introductions.js';
+import marketplace from './marketplace.js';
+import leads from './leads.js';
+import supplier from './supplier.js';
 
 const router = Router();
 
@@ -24,5 +32,13 @@ router.use('/tags', tags);
 router.use('/admin', admin);
 router.use('/deep-submissions', deepSubmissions);
 router.use('/quippy', quippy);
+router.use('/operator', operator);
+router.use('/endorsements', endorsements);
+router.use('/webhooks', webhooks);
+router.use('/discovery', discovery);
+router.use('/introductions', introductions);
+router.use('/marketplace', marketplace);
+router.use('/leads', leads);
+router.use('/supplier', supplier);
 
 export default router;

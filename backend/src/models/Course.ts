@@ -4,8 +4,23 @@ import { TAG_NAMES } from './TechnologyTag.js';
 export const COURSE_TIERS = ['IN', 'DEEP', 'THERE'] as const;
 export type CourseTier = (typeof COURSE_TIERS)[number];
 
-export const COURSE_STATUSES = ['published', 'coming_soon'] as const;
+export const COURSE_STATUSES = [
+  'draft',
+  'submitted',
+  'changes_requested',
+  'approved',
+  'published',
+  'coming_soon',
+] as const;
 export type CourseStatus = (typeof COURSE_STATUSES)[number];
+export const COURSE_OWNER_TYPES = ['quipp', 'operator'] as const;
+export const COURSE_VISIBILITIES = ['public', 'organization'] as const;
+export const COURSE_REVIEW_STATUSES = [
+  'draft',
+  'submitted',
+  'changes_requested',
+  'approved',
+] as const;
 
 export const COURSE_PART_TYPES = [
   'real_world',
@@ -69,6 +84,27 @@ const courseSchema = new Schema(
     retakeCooldownHours: { type: Number, default: 24, min: 0 },
     techScoreContribution: { type: Number, default: 5, min: 0 },
     status: { type: String, enum: COURSE_STATUSES, default: 'published', index: true },
+    priceCents: { type: Number, default: 0, min: 0 },
+    stripePriceId: { type: String, trim: true },
+    ownerType: { type: String, enum: COURSE_OWNER_TYPES, default: 'quipp', index: true },
+    ownerOperatorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Operator',
+      default: null,
+      index: true,
+    },
+    createdByUserId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    visibility: { type: String, enum: COURSE_VISIBILITIES, default: 'public', index: true },
+    reviewStatus: {
+      type: String,
+      enum: COURSE_REVIEW_STATUSES,
+      default: 'approved',
+      index: true,
+    },
+    reviewNotes: { type: String, default: '' },
+    reviewedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    reviewedAt: { type: Date, default: null },
+    approvedVersion: { type: Number, default: 0, min: 0 },
     technicalCompetencies: { type: [String], default: [] },
     parts: { type: [coursePartSchema], default: [] },
   },

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, IdCard, GraduationCap, ShieldCheck, Users, LogOut, Settings, Wrench } from 'lucide-react';
+import { Building2, Home, IdCard, GraduationCap, ShieldCheck, Users, LogOut, Settings, Wrench, Search, UserRoundCheck, ShoppingBasket, FileText, Store } from 'lucide-react';
 import InitialsAvatar from '@/components/InitialsAvatar';
 import { useAuth, type AuthUser } from '@/hooks/useAuth';
 
@@ -9,6 +9,10 @@ const NAV_ITEMS = [
   { to: '/academy', label: 'Academy', Icon: GraduationCap },
   { to: '/credentials', label: 'Credentials', Icon: ShieldCheck },
   { to: '/workplace', label: 'Workplace', Icon: Users },
+  { to: '/discover', label: 'Discover', Icon: Search },
+  { to: '/connections', label: 'Connections', Icon: UserRoundCheck },
+  { to: '/products', label: 'Products', Icon: ShoppingBasket },
+  { to: '/leads', label: 'My quote requests', Icon: FileText },
 ] as const;
 
 function displayName(user: AuthUser): string {
@@ -74,6 +78,39 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 px-3 pb-3 space-y-0.5" aria-label="Sections">
+        {user.roles.includes('operator') && (
+          <NavLink
+            to="/operator/overview"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              [
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#1d123c]',
+                isActive
+                  ? 'bg-primary text-[#1d123c] font-semibold'
+                  : 'text-white/70 hover:bg-white/5 hover:text-white',
+              ].join(' ')
+            }
+          >
+            <Building2 className="h-4 w-4" aria-hidden />
+            <span>Operator workspace</span>
+          </NavLink>
+        )}
+        {user.roles.includes('supplier') && (
+          <NavLink
+            to="/supplier"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              [
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                isActive ? 'bg-primary text-[#1d123c] font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white',
+              ].join(' ')
+            }
+          >
+            <Store className="h-4 w-4" aria-hidden />
+            <span>Supplier workspace</span>
+          </NavLink>
+        )}
         {NAV_ITEMS.map(({ to, label, Icon }) => (
           <NavLink
             key={to}
@@ -100,7 +137,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           <NavLink
             to="/admin"
             onClick={onNavigate}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <Wrench className="h-4 w-4" aria-hidden />
             <span>Admin</span>
@@ -109,7 +146,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         <NavLink
           to="/settings"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <Settings className="h-4 w-4" aria-hidden />
           <span>Settings</span>
@@ -117,7 +154,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <LogOut className="h-4 w-4" aria-hidden />
           <span>Sign out</span>

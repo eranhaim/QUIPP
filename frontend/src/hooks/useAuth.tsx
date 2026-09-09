@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import { api, setAccessToken, getAccessToken } from '@/lib/api';
 import type { Profile } from '@/lib/types';
 
-export type AppRole = 'worker' | 'operator' | 'manufacturer' | 'admin';
+export type AppRole = 'worker' | 'operator' | 'manufacturer' | 'supplier' | 'admin';
 
 export interface AuthUser {
   id: string;

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Building2, Check, ChefHat, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Quippy from '@/components/Quippy';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,49 +9,121 @@ import { api, ApiError } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import type { BaseRole, Profile, TechDeclaration } from '@/lib/types';
 
-const roles: Array<{ label: BaseRole | 'Something else'; roleValue: BaseRole; icon: string; desc: string }> = [
-  { label: 'Kitchen', roleValue: 'Kitchen', icon: '🔥', desc: 'Cook, Chef, Line' },
-  { label: 'Bar', roleValue: 'Bar', icon: '🍸', desc: 'Bartender, Barback' },
-  { label: 'Floor', roleValue: 'Floor', icon: '🍽️', desc: 'Server, Host' },
-  { label: 'Management', roleValue: 'Management', icon: '📋', desc: 'GM, Manager' },
-  { label: 'Ownership', roleValue: 'Ownership', icon: '🔑', desc: 'Owner, Operator' },
-  { label: 'Something else', roleValue: 'Other', icon: '➕', desc: '' },
+type Audience = 'worker' | 'operator';
+
+const ROLES: Array<{ label: string; value: BaseRole; icon: string }> = [
+  { label: 'Kitchen', value: 'Kitchen', icon: '🔥' },
+  { label: 'Bar', value: 'Bar', icon: '🍸' },
+  { label: 'Floor', value: 'Floor', icon: '🍽️' },
+  { label: 'Management', value: 'Management', icon: '📋' },
+  { label: 'Ownership', value: 'Ownership', icon: '🔑' },
+  { label: 'Other', value: 'Other', icon: '➕' },
 ];
 
-const equipmentList = [
-  'Combi Oven', 'Espresso Machine', 'Commercial Griddle', 'Fryer',
-  'Draft Beer System', 'POS System', 'Commercial Dishwasher',
-  'Blast Chiller', 'Salamander', 'Sous Vide', 'Bar Blender',
-  'Commercial Refrigeration', 'Soft Serve Machine', 'Convection Oven',
+const EQUIPMENT = [
+  'Combi Oven',
+  'Espresso Machine',
+  'Commercial Griddle',
+  'Fryer',
+  'POS System',
+  'Commercial Dishwasher',
+  'Blast Chiller',
+  'Sous Vide',
+  'Commercial Refrigeration',
+  'Soft Serve Machine',
 ];
 
-const TOTAL_SCREENS = 5;
+const BUSINESS_TYPES = ['Restaurant', 'Hotel', 'Café', 'Bar', 'Catering', 'Other'];
 
 const Onboarding = () => {
-  const [screen, setScreen] = useState(1);
+  const [step, setStep] = useState(0);
+  const [audience, setAudience] = useState<Audience | null>(null);
   const [role, setRole] = useState<BaseRole | ''>('');
   const [equipment, setEquipment] = useState<string[]>([]);
+  const [companyName, setCompanyName] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [staffSize, setStaffSize] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('Canada');
   const [saving, setSaving] = useState(false);
-  const { user, loading, refreshProfile } = useAuth();
+  const { user, loading, refresh, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!loading && !user) navigate('/signup');
   }, [user, loading, navigate]);
 
-  const toggleEquipment = (item: string) => {
-    setEquipment((prev) => (prev.includes(item) ? prev.filter((e) => e !== item) : [...prev, item]));
-  };
+  const totalSteps = 4;
+  const progress = ((step + 1) / totalSteps) * 100;
+  const name = user?.firstName?.trim() || 'there';
 
-  const quippyReaction = () => {
-    if (equipment.length === 0) return "No worries. That's what we're here for.";
-    if (equipment.length >= 5) return "Look at you. Let's make that official.";
-    return 'Nice picks. Forward.';
+  const prompt = useMemo(() => {
+    if (step === 0) return `Good to meet you, ${name}. First, tell me what brought you here.`;
+    if (step === 1 && audience === 'worker') return 'Where do you spend most of your shift?';
+    if (step === 1) return 'Tell me about the business you run.';
+    if (step === 2 && audience === 'worker') return 'Which equipment do you work with today?';
+    if (step === 2) return 'Where is your first location?';
+    if (step === 3) return audience === 'worker'
+      ? 'That gives me enough to build your first Passport.'
+      : 'That gives me enough to set up your team workspace.';
+    return 'Ready when you are.';
+  }, [audience, name, step]);
+
+  useEffect(() => {
+    if (!user || !audience) return;
+    const timer = window.setTimeout(() => {
+      api('/api/quippy/profile', {
+        method: 'PATCH',
+        auth: true,
+        body: {
+          audience,
+          onboardingStage: `web-step-${step}`,
+          facts:
+            audience === 'operator'
+              ? { companyName, businessType, staffSize: Number(staffSize) || 0, city, country }
+              : { baseRole: role || 'unknown', equipment },
+        },
+      }).catch(() => undefined);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [audience, businessType, city, companyName, country, equipment, role, staffSize, step, user]);
+
+  const toggleEquipment = (item: string) => {
+    setEquipment((current) =>
+      current.includes(item) ? current.filter((value) => value !== item) : [...current, item],
+    );
   };
 
   const finish = async () => {
+    if (!audience) return;
     setSaving(true);
     try {
+      if (audience === 'operator') {
+        await api('/api/operator/setup', {
+          method: 'POST',
+          auth: true,
+          body: {
+            companyName,
+            businessType,
+            staffSize: Number(staffSize),
+            hqLocation: `${city}, ${country}`,
+            locationName: 'Main location',
+            city,
+            country,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+          },
+        });
+        await api('/api/quippy/profile', {
+          method: 'PATCH',
+          auth: true,
+          body: { audience, onboardingStage: 'complete', completed: true },
+        });
+        await refresh();
+        navigate('/operator', { replace: true });
+        return;
+      }
+
       if (role) {
         await api<{ profile: Profile }>('/api/profile/me', {
           method: 'PATCH',
@@ -65,165 +138,331 @@ const Onboarding = () => {
           body: { equipmentNames: equipment },
         });
       }
+      await api('/api/quippy/profile', {
+        method: 'PATCH',
+        auth: true,
+        body: { audience, onboardingStage: 'complete', completed: true },
+      });
       await refreshProfile();
       navigate('/home', { replace: true });
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Something went wrong';
-      toast({ title: "Couldn't save your onboarding", description: message, variant: 'destructive' });
+    } catch (error) {
+      toast({
+        title: 'Onboarding was not saved',
+        description: error instanceof ApiError ? error.message : 'Check your details and try again.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const name = user?.firstName ?? 'there';
+  const canAdvance =
+    (step === 0 && audience !== null) ||
+    (step === 1 && audience === 'worker' && role !== '') ||
+    (step === 1 &&
+      audience === 'operator' &&
+      companyName.trim() !== '' &&
+      businessType !== '' &&
+      Number(staffSize) > 0) ||
+    (step === 2 && audience === 'worker') ||
+    (step === 2 && audience === 'operator' && city.trim() !== '' && country.trim() !== '') ||
+    step >= 3;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-muted">
+    <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <div className="fixed inset-x-0 top-0 z-50 h-1 bg-muted" aria-hidden="true">
         <div
-          className="h-full bg-primary transition-all duration-300"
-          style={{ width: `${(screen / TOTAL_SCREENS) * 100}%` }}
+          className="h-full bg-primary transition-[width] duration-300 motion-reduce:transition-none"
+          style={{ width: `${progress}%` }}
         />
       </div>
 
-      {screen > 1 && (
-        <button
-          onClick={() => setScreen((s) => s - 1)}
-          className="fixed top-4 left-4 z-50 text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back
-        </button>
-      )}
+      <div className="mx-auto grid min-h-screen max-w-6xl lg:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="flex min-w-0 flex-col px-5 pb-8 pt-16 md:px-12 lg:px-16">
+          <div className="mb-10 flex items-center justify-between">
+            <span className="font-display text-xl font-bold lowercase text-primary">quipp</span>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {Math.min(step + 1, totalSteps)} / {totalSteps}
+            </span>
+          </div>
 
-      <AnimatePresence mode="wait">
-        {screen === 1 && (
-          <motion.div key="s1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col items-center justify-center px-5">
-            <Quippy size="xl" />
-            <h1 className="text-3xl md:text-[56px] font-bold font-display text-center mt-8 mb-4 leading-[0.95] uppercase text-foreground tracking-tight">
-              GET QUIPP'D
-            </h1>
-            <p className="text-base text-muted-foreground text-center mb-12">The wave is coming. Ride it.</p>
-            <Button size="lg" className="w-full max-w-[400px] h-14 text-base font-bold rounded-full" onClick={() => setScreen(2)}>
-              Start
-            </Button>
-          </motion.div>
-        )}
+          <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center">
+            <Quippy size="sm" message={prompt} className="mb-7" />
 
-        {screen === 2 && (
-          <motion.div key="s2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col items-center justify-center px-5">
-            <div className="max-w-[400px] w-full space-y-4">
-              {[
-                { highlight: 'EARN', text: "credentials from the world's best equipment brands." },
-                { highlight: 'BUILD', text: 'a Passport that is 100% yours. Forever.' },
-                { highlight: 'SHINE', text: 'Let employers find you by what you actually know.' },
-              ].map((card, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }} className="bg-card rounded-3xl p-6">
-                  <p className="text-lg">
-                    <span className="font-bold text-primary">{card.highlight}</span>{' '}
-                    <span className="text-card-foreground">{card.text}</span>
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-            <Button size="lg" className="w-full max-w-[400px] h-14 text-base font-bold mt-8 rounded-full" onClick={() => setScreen(3)}>
-              Forward →
-            </Button>
-          </motion.div>
-        )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${audience ?? 'new'}-${step}`}
+                initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+                className="min-h-[340px]"
+              >
+                {step === 0 ? (
+                  <AudienceStep value={audience} onChange={setAudience} />
+                ) : null}
+                {step === 1 && audience === 'worker' ? (
+                  <RoleStep value={role} onChange={setRole} />
+                ) : null}
+                {step === 1 && audience === 'operator' ? (
+                  <BusinessStep
+                    companyName={companyName}
+                    businessType={businessType}
+                    staffSize={staffSize}
+                    onCompanyName={setCompanyName}
+                    onBusinessType={setBusinessType}
+                    onStaffSize={setStaffSize}
+                  />
+                ) : null}
+                {step === 2 && audience === 'worker' ? (
+                  <EquipmentStep selected={equipment} onToggle={toggleEquipment} />
+                ) : null}
+                {step === 2 && audience === 'operator' ? (
+                  <LocationStep city={city} country={country} onCity={setCity} onCountry={setCountry} />
+                ) : null}
+                {step >= 3 ? (
+                  <ReviewStep
+                    audience={audience}
+                    role={role}
+                    equipment={equipment}
+                    companyName={companyName}
+                    businessType={businessType}
+                    staffSize={staffSize}
+                    city={city}
+                    country={country}
+                  />
+                ) : null}
+              </motion.div>
+            </AnimatePresence>
 
-        {screen === 3 && (
-          <motion.div key="s3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col items-center justify-center px-5">
-            <Quippy size="sm" message={`What's your world, ${name}?`} className="mb-6" />
-            <div className="grid grid-cols-2 gap-3 max-w-[400px] w-full">
-              {roles.map((r) => (
-                <button
-                  key={r.label}
-                  onClick={() => setRole(r.roleValue)}
-                  className={`rounded-3xl p-5 text-center transition-all min-h-[100px] ${
-                    role === r.roleValue
-                      ? 'bg-card border-2 border-primary'
-                      : 'bg-card border-2 border-border hover:border-muted-foreground'
-                  }`}
+            <div className="mt-8 flex items-center gap-3">
+              {step > 0 ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-12 rounded-full px-6"
+                  onClick={() => setStep((current) => current - 1)}
                 >
-                  <span className="text-3xl block mb-2">{r.icon}</span>
-                  <span className="text-sm font-semibold text-card-foreground block">{r.label}</span>
-                </button>
-              ))}
-            </div>
-            {role && (
-              <Button size="lg" className="w-full max-w-[400px] h-14 text-base font-bold mt-6 rounded-full" onClick={() => setScreen(4)}>
-                This is me
-              </Button>
-            )}
-          </motion.div>
-        )}
-
-        {screen === 4 && (
-          <motion.div key="s4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col items-center px-5 py-16 overflow-y-auto">
-            <Quippy size="sm" message={quippyReaction()} className="mb-4" />
-            <h2 className="text-2xl md:text-3xl font-bold font-display text-foreground text-center mb-2 uppercase">
-              What equipment do you work with?
-            </h2>
-            <p className="text-sm text-muted-foreground mb-6">Pick everything you know.</p>
-            <div className="flex flex-wrap gap-2 max-w-[400px] justify-center mb-6">
-              {equipmentList.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => toggleEquipment(item)}
-                  className={`text-sm px-4 py-2 rounded-full transition-all ${
-                    equipment.includes(item)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-card-foreground border border-border'
-                  }`}
+                  Back
+                </Button>
+              ) : null}
+              {step < 3 ? (
+                <Button
+                  type="button"
+                  className="h-12 flex-1 rounded-full font-bold"
+                  disabled={!canAdvance}
+                  onClick={() => setStep((current) => current + 1)}
                 >
-                  {item}
-                </button>
-              ))}
+                  {step === 0 ? 'This is me' : 'Keep going'}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="h-12 flex-1 rounded-full font-bold"
+                  disabled={saving}
+                  onClick={finish}
+                >
+                  {saving
+                    ? 'Building your space…'
+                    : audience === 'operator'
+                      ? 'Open my workspace'
+                      : 'Build my Passport'}
+                </Button>
+              )}
             </div>
-            <button
-              onClick={() => {
-                setEquipment([]);
-                setScreen(5);
-              }}
-              className="text-sm text-muted-foreground mb-4 hover:text-foreground"
-            >
-              None of these
-            </button>
-            <Button size="lg" className="w-full max-w-[400px] h-14 text-base font-bold rounded-full" onClick={() => setScreen(5)}>
-              These are mine
-            </Button>
-          </motion.div>
-        )}
+          </div>
+        </section>
 
-        {screen === 5 && (
-          <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col items-center justify-center px-5">
-            <div className="bg-card rounded-3xl p-8 max-w-[400px] w-full mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-bold text-muted-foreground uppercase">UNOX</span>
-                <span className="text-[11px] font-bold uppercase px-3 py-1 rounded-full bg-foreground text-background">IN</span>
-              </div>
-              <h3 className="text-xl font-bold font-display text-card-foreground mb-2">Smart Ovens</h3>
-              <div className="w-full h-2 rounded-full bg-muted mb-3">
-                <div className="h-full bg-primary rounded-full w-0" />
-              </div>
-              <p className="text-xs text-muted-foreground">0% complete</p>
-            </div>
-            <p className="text-lg font-semibold text-foreground text-center mb-6">
-              This one has your name on it.
-            </p>
-            <Button
-              size="lg"
-              className="w-full max-w-[400px] h-14 text-base font-bold mb-3 rounded-full"
-              onClick={finish}
-              disabled={saving}
-            >
-              {saving ? 'Saving…' : 'Start earning'}
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        <aside className="hidden border-l border-border bg-card p-8 lg:flex lg:flex-col">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Live brief</p>
+          <h2 className="mt-3 text-3xl font-bold font-display text-balance">What QUIPPY knows</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            This grows as you talk. You control what becomes public.
+          </p>
+          <div className="mt-10 space-y-4">
+            <BriefRow icon={audience === 'operator' ? Building2 : ChefHat} label="Path" value={audience === 'operator' ? 'Business' : audience === 'worker' ? 'Worker' : 'Not chosen'} />
+            <BriefRow icon={Users} label="People" value={audience === 'operator' && staffSize ? `${staffSize} staff` : role || 'Not added'} />
+            <BriefRow icon={MapPin} label="Place" value={city ? `${city}, ${country}` : 'Not added'} />
+          </div>
+          <div className="mt-auto rounded-2xl border border-border bg-background p-4 text-xs leading-relaxed text-muted-foreground">
+            Private answers stay between you and QUIPPY. Businesses never receive private chat history.
+          </div>
+        </aside>
+      </div>
+    </main>
   );
 };
+
+const AudienceStep = ({
+  value,
+  onChange,
+}: {
+  value: Audience | null;
+  onChange: (value: Audience) => void;
+}) => (
+  <div>
+    <h1 className="text-3xl font-bold font-display text-balance md:text-5xl">What are we building?</h1>
+    <p className="mt-3 text-muted-foreground">Choose the path that matches today. You can add another role later.</p>
+    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <ChoiceCard selected={value === 'worker'} icon={ChefHat} title="My professional Passport" body="Earn credentials and carry them everywhere." onClick={() => onChange('worker')} />
+      <ChoiceCard selected={value === 'operator'} icon={Building2} title="My business team" body="Assign training and see who is ready." onClick={() => onChange('operator')} />
+    </div>
+  </div>
+);
+
+const RoleStep = ({ value, onChange }: { value: BaseRole | ''; onChange: (value: BaseRole) => void }) => (
+  <div>
+    <h1 className="text-3xl font-bold font-display text-balance md:text-5xl">Your world at work</h1>
+    <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {ROLES.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          aria-pressed={value === item.value}
+          onClick={() => onChange(item.value)}
+          className={`min-h-28 rounded-2xl border-2 p-4 text-left transition-[border-color,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            value === item.value ? 'border-primary bg-primary/10' : 'border-border bg-card hover:border-muted-foreground'
+          }`}
+        >
+          <span className="text-2xl" aria-hidden="true">{item.icon}</span>
+          <span className="mt-3 block text-sm font-bold">{item.label}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const BusinessStep = ({
+  companyName,
+  businessType,
+  staffSize,
+  onCompanyName,
+  onBusinessType,
+  onStaffSize,
+}: {
+  companyName: string;
+  businessType: string;
+  staffSize: string;
+  onCompanyName: (value: string) => void;
+  onBusinessType: (value: string) => void;
+  onStaffSize: (value: string) => void;
+}) => (
+  <div>
+    <h1 className="text-3xl font-bold font-display text-balance md:text-5xl">Start with the basics</h1>
+    <div className="mt-8 space-y-5">
+      <Field label="Business name" name="companyName" value={companyName} onChange={onCompanyName} autoComplete="organization" placeholder="The Drake Hotel…" />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <label className="block text-sm font-semibold">
+          Business type
+          <select name="businessType" value={businessType} onChange={(event) => onBusinessType(event.target.value)} className="mt-2 h-12 w-full rounded-xl border-2 border-border bg-background px-3 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <option value="">Choose one</option>
+            {BUSINESS_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+        </label>
+        <Field label="Team size" name="staffSize" value={staffSize} onChange={onStaffSize} type="number" min={1} inputMode="numeric" autoComplete="off" placeholder="25…" />
+      </div>
+    </div>
+  </div>
+);
+
+const LocationStep = ({ city, country, onCity, onCountry }: { city: string; country: string; onCity: (value: string) => void; onCountry: (value: string) => void }) => (
+  <div>
+    <h1 className="text-3xl font-bold font-display text-balance md:text-5xl">Where is the team?</h1>
+    <p className="mt-3 text-muted-foreground">We use this for local courses, equipment support and future connections.</p>
+    <div className="mt-8 grid gap-5 sm:grid-cols-2">
+      <Field label="City" name="city" value={city} onChange={onCity} autoComplete="address-level2" placeholder="Toronto…" />
+      <Field label="Country" name="country" value={country} onChange={onCountry} autoComplete="country-name" placeholder="Canada…" />
+    </div>
+  </div>
+);
+
+const EquipmentStep = ({ selected, onToggle }: { selected: string[]; onToggle: (item: string) => void }) => (
+  <div>
+    <h1 className="text-3xl font-bold font-display text-balance md:text-5xl">Your everyday technology</h1>
+    <p className="mt-3 text-muted-foreground">Pick any you use. It is fine to skip this.</p>
+    <div className="mt-8 flex flex-wrap gap-3">
+      {EQUIPMENT.map((item) => (
+        <button
+          key={item}
+          type="button"
+          aria-pressed={selected.includes(item)}
+          onClick={() => onToggle(item)}
+          className={`rounded-full border px-4 py-2.5 text-sm font-medium transition-[border-color,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            selected.includes(item) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-muted-foreground'
+          }`}
+        >
+          {selected.includes(item) ? <Check className="mr-1.5 inline h-4 w-4" aria-hidden="true" /> : null}
+          {item}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const ReviewStep = ({ audience, role, equipment, companyName, businessType, staffSize, city, country }: { audience: Audience | null; role: BaseRole | ''; equipment: string[]; companyName: string; businessType: string; staffSize: string; city: string; country: string }) => (
+  <div>
+    <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Your starting point</p>
+    <h1 className="mt-3 text-3xl font-bold font-display text-balance md:text-5xl">
+      {audience === 'operator' ? companyName : `${role || 'Hospitality'} Passport`}
+    </h1>
+    <div className="mt-8 rounded-3xl bg-card p-6">
+      {audience === 'operator' ? (
+        <div className="space-y-3 text-sm">
+          <p><span className="text-muted-foreground">Business</span><span className="float-right font-semibold">{businessType}</span></p>
+          <p><span className="text-muted-foreground">Team</span><span className="float-right font-semibold">{staffSize} people</span></p>
+          <p><span className="text-muted-foreground">First location</span><span className="float-right font-semibold">{city}, {country}</span></p>
+        </div>
+      ) : (
+        <div>
+          <p className="text-sm text-muted-foreground">Equipment saved</p>
+          <p className="mt-2 text-lg font-semibold">{equipment.length > 0 ? equipment.join(' · ') : 'Add equipment later'}</p>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+const ChoiceCard = ({ selected, icon: Icon, title, body, onClick }: { selected: boolean; icon: typeof ChefHat; title: string; body: string; onClick: () => void }) => (
+  <button
+    type="button"
+    aria-pressed={selected}
+    onClick={onClick}
+    className={`rounded-3xl border-2 p-6 text-left transition-[border-color,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      selected ? 'border-primary bg-primary/10' : 'border-border bg-card hover:border-muted-foreground'
+    }`}
+  >
+    <Icon className="h-7 w-7 text-primary" aria-hidden="true" />
+    <span className="mt-8 block text-lg font-bold">{title}</span>
+    <span className="mt-2 block text-sm leading-relaxed text-muted-foreground">{body}</span>
+  </button>
+);
+
+const Field = ({ label, name, value, onChange, type = 'text', placeholder, autoComplete, inputMode, min }: { label: string; name: string; value: string; onChange: (value: string) => void; type?: string; placeholder: string; autoComplete: string; inputMode?: 'numeric'; min?: number }) => (
+  <label className="block text-sm font-semibold">
+    {label}
+    <input
+      name={name}
+      type={type}
+      min={min}
+      inputMode={inputMode}
+      autoComplete={autoComplete}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      className="mt-2 h-12 w-full rounded-xl border-2 border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    />
+  </label>
+);
+
+const BriefRow = ({ icon: Icon, label, value }: { icon: typeof ChefHat; label: string; value: string }) => (
+  <div className="flex items-center gap-3 border-b border-border pb-4">
+    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <Icon className="h-4 w-4" aria-hidden="true" />
+    </span>
+    <div className="min-w-0">
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="truncate text-sm font-semibold">{value}</p>
+    </div>
+  </div>
+);
 
 export default Onboarding;

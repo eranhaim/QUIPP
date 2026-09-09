@@ -6,12 +6,13 @@ import type { Video } from '@/lib/types';
 
 interface VideoUploadProps {
   onUploaded?: (video: Video) => void;
+  endpointBase?: string;
 }
 
 const MAX_BYTES = 500 * 1024 * 1024;
 const ALLOWED = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 
-const VideoUpload = ({ onUploaded }: VideoUploadProps) => {
+const VideoUpload = ({ onUploaded, endpointBase = '/api/admin/videos' }: VideoUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -52,7 +53,7 @@ const VideoUpload = ({ onUploaded }: VideoUploadProps) => {
     setDone(false);
     try {
       const draft = await api<{ video: Video; uploadUrl: string; s3Key: string }>(
-        '/api/admin/videos',
+        endpointBase,
         {
           method: 'POST',
           auth: true,
@@ -67,7 +68,7 @@ const VideoUpload = ({ onUploaded }: VideoUploadProps) => {
       await uploadToPresigned(draft.uploadUrl, file, file.type, setProgress);
       const durationSec = await probeDuration(file).catch(() => undefined);
       const { video } = await api<{ video: Video }>(
-        `/api/admin/videos/${draft.video.id}/confirm`,
+        `${endpointBase}/${draft.video.id}/confirm`,
         { method: 'POST', auth: true, body: { durationSec } },
       );
       setDone(true);
@@ -178,7 +179,7 @@ const VideoUpload = ({ onUploaded }: VideoUploadProps) => {
           <CheckCircle2 className="w-4 h-4" aria-hidden /> Upload complete.
         </div>
       )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
     </div>
   );
 };

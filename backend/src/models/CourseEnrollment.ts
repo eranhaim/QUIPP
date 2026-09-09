@@ -32,6 +32,13 @@ const enrollmentSchema = new Schema(
       enum: ENROLLMENT_SOURCE_TYPES,
       default: 'free',
     },
+    sourceId: { type: Schema.Types.ObjectId, default: null, index: true },
+    sourceOperatorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Operator',
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true },
 );

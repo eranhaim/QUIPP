@@ -2,6 +2,8 @@ import { Credential } from '../models/Credential.js';
 import { Profile } from '../models/Profile.js';
 import { User } from '../models/User.js';
 import { HttpError } from '../middleware/errorHandler.js';
+import { randomToken } from '../lib/crypto.js';
+import { refreshTechScore } from './profile.service.js';
 
 export interface PublicCredential {
   id: string;
@@ -65,9 +67,59 @@ export async function listCredentialsForUser(userId: string): Promise<PublicCred
   return docs.map((d) => toPublic(d.toObject() as never));
 }
 
+interface CredentialCourse {
+  _id: unknown;
+  slug: string;
+  title: string;
+  tier: 'IN' | 'DEEP' | 'THERE';
+  tagName: string;
+  provider: string;
+  isManufacturer: boolean;
+  techFocus: string;
+  technicalCompetencies: string[];
+  techScoreContribution: number;
+}
+
+export async function issueCourseCredential(
+  userId: string,
+  course: CredentialCourse,
+  quizScore: number | null,
+): Promise<InstanceType<typeof Credential>> {
+  const existing = await Credential.findOne({ userId, courseSlug: course.slug });
+  if (existing) return existing;
+
+  try {
+    const credential = await Credential.create({
+      userId,
+      courseId: course._id,
+      courseSlug: course.slug,
+      courseName: course.title,
+      tier: course.tier,
+      tagName: course.tagName,
+      provider: course.provider,
+      isManufacturer: course.isManufacturer,
+      techFocus: course.techFocus,
+      verificationId: `QUIPP-${randomToken(8).toUpperCase()}`,
+      quizScore,
+      skillsDemonstrated: course.technicalCompetencies,
+      techScoreContribution: course.techScoreContribution,
+    });
+    await refreshTechScore(userId);
+    return credential;
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000) {
+      const racedCredential = await Credential.findOne({ userId, courseSlug: course.slug });
+      if (racedCredential) return racedCredential;
+    }
+    throw error;
+  }
+}
+
 export async function listCredentialsByUsername(username: string): Promise<PublicCredential[]> {
   const profile = await Profile.findOne({ username: username.toLowerCase() });
-  if (!profile) throw new HttpError(404, 'Profile not found');
+  if (!profile || profile.visibilityStatus === 'private') {
+    throw new HttpError(404, 'Profile not found');
+  }
   return listCredentialsForUser(String(profile.userId));
 }
 
@@ -86,7 +138,9 @@ export async function verifyCredentialById(verificationId: string): Promise<Veri
 
   const profile = await Profile.findOne({ userId: cred.userId });
   const user = await User.findById(cred.userId).select('firstName lastName');
-  if (!profile || !user) throw new HttpError(404, 'Credential holder not found');
+  if (!profile || !user || profile.visibilityStatus === 'private') {
+    throw new HttpError(404, 'Credential not found');
+  }
 
   return {
     credential: toPublic(cred.toObject() as never),

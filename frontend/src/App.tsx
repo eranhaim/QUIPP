@@ -17,6 +17,11 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import OperatorDashboard from "./pages/OperatorDashboard";
+import OperatorCourses from "./pages/operator/OperatorCourses";
+import OperatorCourseEditor from "./pages/operator/OperatorCourseEditor";
+import CoursePackCheckoutStatus from "./pages/operator/CoursePackCheckoutStatus";
+import Workplace from "./pages/Workplace";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import DeepSubmit from "./pages/DeepSubmit";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -24,7 +29,14 @@ import AdminCourses from "./pages/admin/AdminCourses";
 import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
 import AdminVideos from "./pages/admin/AdminVideos";
 import AdminDeepSubmissions from "./pages/admin/AdminDeepSubmissions";
+import AdminCourseReviews from "./pages/admin/AdminCourseReviews";
 import QuippyChat from "./components/QuippyChat";
+import Discover from "./pages/Discover";
+import Connections from "./pages/Connections";
+import Products from "./pages/Products";
+import MyLeads from "./pages/MyLeads";
+import SupplierDashboard from "./pages/SupplierDashboard";
+import AdminMarketplace from "./pages/admin/AdminMarketplace";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +121,51 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/workplace"
+              element={
+                <ProtectedRoute>
+                  <Workplace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/discover"
+              element={
+                <ProtectedRoute>
+                  <Discover />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/connections"
+              element={
+                <ProtectedRoute>
+                  <Connections />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/products"
+              element={<ProtectedRoute><Products /></ProtectedRoute>}
+            />
+            <Route
+              path="/leads"
+              element={<ProtectedRoute><MyLeads /></ProtectedRoute>}
+            />
+
+            <Route
+              path="/supplier"
+              element={<ProtectedRoute role="supplier"><SupplierDashboard /></ProtectedRoute>}
+            />
 
             <Route
               path="/passport/deep/:credentialId"
@@ -124,7 +181,31 @@ const App = () => (
               path="/operator"
               element={
                 <ProtectedRoute role="operator">
-                  <OperatorDashboard />
+                  <Navigate to="/operator/overview" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/courses"
+              element={
+                <ProtectedRoute role="operator">
+                  <OperatorCourses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/courses/:id"
+              element={
+                <ProtectedRoute role="operator">
+                  <OperatorCourseEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/operator/course-packs/:result"
+              element={
+                <ProtectedRoute role="operator">
+                  <CoursePackCheckoutStatus />
                 </ProtectedRoute>
               }
             />
@@ -149,8 +230,10 @@ const App = () => (
               <Route index element={<Navigate to="courses" replace />} />
               <Route path="courses" element={<AdminCourses />} />
               <Route path="courses/:slug" element={<AdminCourseEditor />} />
+              <Route path="course-reviews" element={<AdminCourseReviews />} />
               <Route path="videos" element={<AdminVideos />} />
               <Route path="deep-submissions" element={<AdminDeepSubmissions />} />
+              <Route path="marketplace" element={<AdminMarketplace />} />
             </Route>
 
             {/* Legacy redirects */}

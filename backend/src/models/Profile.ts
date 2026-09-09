@@ -41,6 +41,9 @@ const profileSchema = new Schema(
   { timestamps: true },
 );
 
+profileSchema.index({ visibilityStatus: 1, baseRole: 1, location: 1 });
+profileSchema.index({ visibilityStatus: 1, techProficiencyScore: -1 });
+
 export type ProfileDoc = InferSchemaType<typeof profileSchema> & {
   _id: Schema.Types.ObjectId;
 };

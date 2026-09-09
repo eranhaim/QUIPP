@@ -1,5 +1,6 @@
-import { Course, type CourseTier } from '../models/Course.js';
+import { Course, type CourseStatus, type CourseTier } from '../models/Course.js';
 import { Video } from '../models/Video.js';
+import { WorkplaceLink } from '../models/WorkplaceLink.js';
 import { HttpError } from '../middleware/errorHandler.js';
 import { presignGet, isS3Configured } from '../config/aws.js';
 
@@ -23,7 +24,10 @@ export interface PublicCourse {
   passMark: number;
   retakeCooldownHours: number;
   techScoreContribution: number;
-  status: 'published' | 'coming_soon';
+  status: CourseStatus;
+  priceCents: number;
+  ownerType: 'quipp' | 'operator';
+  visibility: 'public' | 'organization';
   technicalCompetencies: string[];
   parts: Array<{
     partId: string;
@@ -53,7 +57,7 @@ interface RawPart {
   directVideoUrl?: string | null;
 }
 
-interface RawCourse {
+export interface RawCourse {
   _id: unknown;
   slug: string;
   title: string;
@@ -68,7 +72,18 @@ interface RawCourse {
   passMark: number;
   retakeCooldownHours: number;
   techScoreContribution: number;
-  status: 'published' | 'coming_soon';
+  status: CourseStatus;
+  priceCents?: number;
+  stripePriceId?: string;
+  ownerType?: 'quipp' | 'operator';
+  ownerOperatorId?: unknown;
+  createdByUserId?: unknown;
+  visibility?: 'public' | 'organization';
+  reviewStatus?: 'draft' | 'submitted' | 'changes_requested' | 'approved';
+  reviewNotes?: string;
+  reviewedBy?: unknown;
+  reviewedAt?: Date;
+  approvedVersion?: number;
   technicalCompetencies: string[];
   parts: RawPart[];
 }
@@ -121,6 +136,9 @@ async function toPublicCourse(doc: RawCourse): Promise<PublicCourse> {
     retakeCooldownHours: doc.retakeCooldownHours,
     techScoreContribution: doc.techScoreContribution,
     status: doc.status,
+    priceCents: doc.priceCents ?? 0,
+    ownerType: doc.ownerType ?? 'quipp',
+    visibility: doc.visibility ?? 'public',
     technicalCompetencies: doc.technicalCompetencies,
     parts: doc.parts.map((p) => {
       const videoIdStr = p.videoId ? String(p.videoId) : null;
@@ -153,15 +171,39 @@ function guessMime(url: string): string | null {
   return null;
 }
 
-export async function listCourses(): Promise<PublicCourse[]> {
-  const docs = await Course.find({ status: 'published' })
+async function accessibleOrganizationIds(userId: string): Promise<unknown[]> {
+  const links = await WorkplaceLink.find({ workerId: userId, status: 'active' })
+    .select('operatorId')
+    .lean();
+  return links.map((link) => link.operatorId);
+}
+
+export async function listCourses(userId: string): Promise<PublicCourse[]> {
+  const operatorIds = await accessibleOrganizationIds(userId);
+  const docs = await Course.find({
+    status: 'published',
+    $or: [
+      { visibility: 'public' },
+      { visibility: { $exists: false } },
+      { visibility: 'organization', ownerOperatorId: { $in: operatorIds } },
+    ],
+  })
     .sort({ tagName: 1, tier: 1, title: 1 })
     .lean();
   return Promise.all(docs.map((d) => toPublicCourse(d as unknown as RawCourse)));
 }
 
-export async function getCourseBySlug(slug: string): Promise<PublicCourse> {
-  const doc = await Course.findOne({ slug: slug.toLowerCase() }).lean();
+export async function getCourseBySlug(slug: string, userId: string): Promise<PublicCourse> {
+  const operatorIds = await accessibleOrganizationIds(userId);
+  const doc = await Course.findOne({
+    slug: slug.toLowerCase(),
+    status: 'published',
+    $or: [
+      { visibility: 'public' },
+      { visibility: { $exists: false } },
+      { visibility: 'organization', ownerOperatorId: { $in: operatorIds } },
+    ],
+  }).lean();
   if (!doc) throw new HttpError(404, 'Course not found');
   return toPublicCourse(doc as unknown as RawCourse);
 }
@@ -226,6 +268,14 @@ export async function gradeQuiz(slug: string, answers: number[]): Promise<QuizGr
 // are behind adminRequired middleware.
 
 export interface AdminCourse extends Omit<PublicCourse, 'parts'> {
+  stripePriceId: string | null;
+  ownerOperatorId: string | null;
+  createdByUserId: string | null;
+  reviewStatus: 'draft' | 'submitted' | 'changes_requested' | 'approved';
+  reviewNotes: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  approvedVersion: number;
   parts: Array<{
     partId: string;
     type: 'real_world' | 'knowledge' | 'video' | 'mastery_check' | 'credential';
@@ -238,7 +288,7 @@ export interface AdminCourse extends Omit<PublicCourse, 'parts'> {
   }>;
 }
 
-function toAdminCourse(doc: RawCourse): AdminCourse {
+export function toAdminCourse(doc: RawCourse): AdminCourse {
   return {
     id: String(doc._id),
     slug: doc.slug,
@@ -255,6 +305,17 @@ function toAdminCourse(doc: RawCourse): AdminCourse {
     retakeCooldownHours: doc.retakeCooldownHours,
     techScoreContribution: doc.techScoreContribution,
     status: doc.status,
+    priceCents: doc.priceCents ?? 0,
+    stripePriceId: doc.stripePriceId ?? null,
+    ownerType: doc.ownerType ?? 'quipp',
+    ownerOperatorId: doc.ownerOperatorId ? String(doc.ownerOperatorId) : null,
+    createdByUserId: doc.createdByUserId ? String(doc.createdByUserId) : null,
+    visibility: doc.visibility ?? 'public',
+    reviewStatus: doc.reviewStatus ?? 'approved',
+    reviewNotes: doc.reviewNotes ?? '',
+    reviewedBy: doc.reviewedBy ? String(doc.reviewedBy) : null,
+    reviewedAt: doc.reviewedAt ? doc.reviewedAt.toISOString() : null,
+    approvedVersion: doc.approvedVersion ?? 0,
     technicalCompetencies: doc.technicalCompetencies,
     parts: doc.parts.map((p) => ({
       partId: p.partId,
@@ -294,7 +355,10 @@ export interface AdminCourseInput {
   passMark?: number;
   retakeCooldownHours?: number;
   techScoreContribution?: number;
-  status?: 'published' | 'coming_soon';
+  status?: CourseStatus;
+  priceCents?: number;
+  stripePriceId?: string | null;
+  visibility?: 'public' | 'organization';
   technicalCompetencies?: string[];
   parts?: AdminCourse['parts'];
 }
@@ -319,6 +383,11 @@ export async function adminCreateCourse(input: AdminCourseInput): Promise<AdminC
     retakeCooldownHours: input.retakeCooldownHours ?? 24,
     techScoreContribution: input.techScoreContribution ?? 5,
     status: input.status ?? 'coming_soon',
+    priceCents: input.priceCents ?? 0,
+    stripePriceId: input.stripePriceId ?? undefined,
+    visibility: input.visibility ?? 'public',
+    ownerType: 'quipp',
+    reviewStatus: 'approved',
     technicalCompetencies: input.technicalCompetencies ?? [],
     parts: input.parts ?? [],
   });
@@ -346,6 +415,9 @@ export async function adminUpdateCourse(
     'retakeCooldownHours',
     'techScoreContribution',
     'status',
+    'priceCents',
+    'stripePriceId',
+    'visibility',
     'technicalCompetencies',
     'parts',
   ];
@@ -361,7 +433,7 @@ export async function adminUpdateCourse(
 
 export async function adminSetStatus(
   slug: string,
-  status: 'published' | 'coming_soon',
+  status: CourseStatus,
 ): Promise<AdminCourse> {
   const doc = await Course.findOneAndUpdate(
     { slug: slug.toLowerCase() },
