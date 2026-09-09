@@ -189,7 +189,7 @@ const Onboarding = () => {
           <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center">
             <Quippy size="sm" message={prompt} className="mb-7" />
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               <motion.div
                 key={`${audience ?? 'new'}-${step}`}
                 initial={reduceMotion ? false : { opacity: 0, y: 14 }}
