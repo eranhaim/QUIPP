@@ -258,7 +258,7 @@ const ActionTile = ({ to, title, body, Icon }: ActionTileProps) => (
     <Icon className="h-5 w-5 text-primary" aria-hidden />
     <h3 className="mt-4 text-base font-bold font-display uppercase text-foreground">{title}</h3>
     <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-    <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-foreground/70 group-hover:text-primary transition-colors">
+    <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-foreground group-hover:text-secondary transition-colors">
       Open <ArrowRight className="h-3 w-3" aria-hidden />
     </span>
   </Link>

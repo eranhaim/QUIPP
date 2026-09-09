@@ -256,7 +256,7 @@ const OperatorDashboard = () => {
     <AppShell>
       <header className="border-b border-border bg-background print:border-0">
         <div className="mx-auto max-w-[1200px] px-5 py-6">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
             Operator workspace
           </p>
           <h1 className="mt-2 text-3xl font-bold font-display text-foreground">
@@ -277,7 +277,7 @@ const OperatorDashboard = () => {
               className={({ isActive }) =>
                 `flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   isActive
-                    ? 'border-primary text-primary'
+                    ? 'border-primary text-secondary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`
               }
@@ -494,7 +494,7 @@ function Team({
         </div>
 
         <form onSubmit={submit} className="h-fit rounded-3xl bg-card p-6">
-          <UserPlus className="h-6 w-6 text-primary" aria-hidden="true" />
+          <UserPlus className="h-6 w-6 text-secondary" aria-hidden="true" />
           <h3 className="mt-4 text-lg font-bold">Invite a worker</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             The worker must already have a QUIPP account.
@@ -917,7 +917,7 @@ function EndorsementReviews({
                       {formatDate(endorsement.reviewedAt)}
                     </p>
                   </div>
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold capitalize text-primary">
+                  <span className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold capitalize text-secondary">
                     {endorsement.status}
                   </span>
                 </div>
@@ -1087,7 +1087,7 @@ function Locations({
             {isLoading ? <EmptyMessage>Loading locations…</EmptyMessage> : null}
             {locations.map((location) => (
               <article key={location._id} className="rounded-3xl bg-card p-5">
-                <Building2 className="h-5 w-5 text-primary" aria-hidden="true" />
+                <Building2 className="h-5 w-5 text-secondary" aria-hidden="true" />
                 <h3 className="mt-4 font-bold">{location.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {location.city}, {location.country}
@@ -1152,7 +1152,7 @@ function Compliance({
       </div>
 
       <article className="mt-6 rounded-3xl bg-card p-6 print:mt-0 print:rounded-none print:bg-white print:p-0 print:text-black">
-        <p className="text-xs font-bold uppercase tracking-widest text-primary print:text-black">
+        <p className="text-xs font-bold uppercase tracking-widest text-secondary print:text-black">
           QUIPP training record
         </p>
         <h3 className="mt-2 text-2xl font-bold">{operator?.companyName ?? 'Organization'}</h3>
@@ -1231,7 +1231,7 @@ function PackCard({
             Purchased {formatDate(pack.createdAt)} · payment {pack.paymentId.status}
           </p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold ${active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+        <span className={`rounded-full px-3 py-1 text-xs font-bold ${active ? 'bg-secondary/10 text-secondary' : 'bg-muted text-muted-foreground'}`}>
           {available} of {pack.quantity} seats available
         </span>
       </div>
@@ -1328,7 +1328,7 @@ function StatusPill({ status }: { status: CourseAssignment['status'] }) {
   const label =
     status === 'in_progress' ? 'In progress' : status === 'completed' ? 'Completed' : 'Assigned';
   return (
-    <span className="whitespace-nowrap rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+    <span className="whitespace-nowrap rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">
       {label}
     </span>
   );

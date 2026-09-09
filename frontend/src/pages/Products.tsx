@@ -53,7 +53,7 @@ export default function Products() {
     <AppShell>
       <div className="mx-auto max-w-6xl px-5 py-10">
         <header className="max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Approved catalog</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Approved catalog</p>
           <h1 className="mt-3 text-4xl font-bold font-display">Equipment options, with the commercial layer visible.</h1>
           <p className="mt-4 text-muted-foreground">
             Results are ranked by fit. Demo catalog facts are unverified; confirm price, compatibility,
@@ -62,7 +62,7 @@ export default function Products() {
         </header>
 
         <aside className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm" aria-label="Affiliate disclosure">
-          <Sparkles className="mr-2 inline h-4 w-4 text-primary" aria-hidden />
+          <Sparkles className="mr-2 inline h-4 w-4 text-secondary" aria-hidden />
           <strong>Some links may earn QUIPP a commission.</strong> This does not change how options are ranked.
         </aside>
 
@@ -83,8 +83,8 @@ export default function Products() {
           {products.map((product) => (
             <article key={product.id} className="flex flex-col rounded-3xl border border-border bg-card p-6">
               <div className="flex items-start justify-between gap-3">
-                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-bold">{product.category}</span>
-                {product.offer ? <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Affiliate link</span> : null}
+                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-bold text-secondary-foreground">{product.category}</span>
+                {product.offer ? <span className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">Affiliate link</span> : null}
               </div>
               <h2 className="mt-5 text-xl font-bold">{product.name}</h2>
               <p className="mt-1 text-sm font-medium text-muted-foreground">{product.brand} · {product.model}</p>
@@ -98,7 +98,7 @@ export default function Products() {
               </p>
               {product.offer ? (
                 <>
-                  <p className="mt-4 text-xs font-semibold text-primary">{product.offer.disclosureLabel}</p>
+                  <p className="mt-4 text-xs font-semibold text-secondary">{product.offer.disclosureLabel}</p>
                   <Button type="button" className="mt-3 rounded-full" disabled={clickMutation.isPending} onClick={() => clickMutation.mutate(product.offer!.id)}>
                     Visit supplier <ExternalLink className="ml-2 h-4 w-4" />
                   </Button>

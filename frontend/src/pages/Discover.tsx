@@ -42,7 +42,7 @@ export default function Discover() {
     <AppShell>
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-12">
         <header className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Open Passports</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-secondary">Open Passports</p>
           <h1 className="mt-2 text-3xl font-extrabold font-display uppercase md:text-5xl">
             Discover professionals
           </h1>
@@ -158,7 +158,7 @@ function WorkerCard({ worker }: { worker: DiscoveredWorker }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="text-xl">
-              <Link className="hover:text-primary hover:underline" to={`/p/${worker.username}`}>
+              <Link className="hover:text-secondary hover:underline" to={`/p/${worker.username}`}>
                 @{worker.username}
               </Link>
             </CardTitle>
