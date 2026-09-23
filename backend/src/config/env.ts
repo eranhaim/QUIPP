@@ -61,6 +61,9 @@ const schema = z.object({
   GREEN_API_API_URL: z.string().url().default('https://api.green-api.com'),
   GREEN_API_WEBHOOK_TOKEN: optionalNonEmptyString,
   GREEN_API_ENABLED: optionalBoolean,
+  // Enables the unauthenticated course-lead flow for the configured QUIPP GreenAPI instance.
+  // When false, inbound WhatsApp messages continue to use the account-linked QUIPPY flow.
+  GREEN_API_LEAD_BOT_ENABLED: optionalBoolean,
 });
 
 const parsed = schema.safeParse(process.env);

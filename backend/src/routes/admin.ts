@@ -6,6 +6,7 @@ import * as courses from '../controllers/adminCourse.controller.js';
 import * as deep from '../controllers/deepSubmission.controller.js';
 import * as courseReviews from '../controllers/courseReview.controller.js';
 import * as marketplace from '../controllers/adminMarketplace.controller.js';
+import * as whatsAppLeads from '../controllers/adminWhatsAppLead.controller.js';
 
 const router = Router();
 
@@ -40,5 +41,8 @@ router.post('/marketplace/products', asyncHandler(marketplace.createProduct));
 router.patch('/marketplace/products/:id', asyncHandler(marketplace.updateProduct));
 router.post('/marketplace/offers', asyncHandler(marketplace.createOffer));
 router.patch('/marketplace/offers/:id', asyncHandler(marketplace.updateOffer));
+
+router.get('/whatsapp-leads', asyncHandler(whatsAppLeads.list));
+router.patch('/whatsapp-leads/:id', asyncHandler(whatsAppLeads.update));
 
 export default router;

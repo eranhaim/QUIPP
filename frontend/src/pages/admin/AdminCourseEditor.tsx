@@ -85,6 +85,8 @@ const AdminCourseEditor = () => {
           retakeCooldownHours: draft.retakeCooldownHours,
           techScoreContribution: draft.techScoreContribution,
           status: draft.status,
+          priceCents: draft.priceCents,
+          stripePriceId: draft.stripePriceId || null,
           technicalCompetencies: draft.technicalCompetencies,
           parts: draft.parts,
         },
@@ -206,6 +208,19 @@ const AdminCourseEditor = () => {
             id="ed-prov"
             value={draft.provider}
             onChange={(v) => patch({ provider: v })}
+          />
+          <LabeledInput
+            label="Price (cents)"
+            id="ed-price"
+            type="number"
+            value={String(draft.priceCents)}
+            onChange={(v) => patch({ priceCents: Math.max(0, Number(v) || 0) })}
+          />
+          <LabeledInput
+            label="Stripe price ID (optional)"
+            id="ed-stripe-price"
+            value={draft.stripePriceId ?? ''}
+            onChange={(v) => patch({ stripePriceId: v || null })}
           />
           <label className="flex items-center gap-2 text-sm">
             <input

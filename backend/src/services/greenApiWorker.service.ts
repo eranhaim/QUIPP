@@ -16,6 +16,7 @@ import {
   isWhatsAppLinkCode,
 } from './whatsAppLink.service.js';
 import { classifyGreenApiCommand } from './greenApiParsing.js';
+import { replyToWhatsAppCourseLead } from './whatsAppCourseLeadBot.service.js';
 
 const POLL_INTERVAL_MS = 1_000;
 const STALE_LOCK_MS = 5 * 60 * 1000;
@@ -210,6 +211,20 @@ export class GreenApiWorker {
 
     if (identity.status === 'opted_out') {
       await this.markIgnored(event);
+      return;
+    }
+
+    if (env.GREEN_API_LEAD_BOT_ENABLED) {
+      const reply = await replyToWhatsAppCourseLead({
+        chatId: event.chatId,
+        senderName: event.senderName ?? null,
+        text,
+      });
+      await this.sender.sendText({
+        chatId: event.chatId,
+        message: reply,
+      });
+      await this.markCompleted(event);
       return;
     }
 

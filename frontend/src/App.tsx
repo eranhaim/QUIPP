@@ -30,6 +30,7 @@ import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
 import AdminVideos from "./pages/admin/AdminVideos";
 import AdminDeepSubmissions from "./pages/admin/AdminDeepSubmissions";
 import AdminCourseReviews from "./pages/admin/AdminCourseReviews";
+import AdminWhatsAppLeads from "./pages/admin/AdminWhatsAppLeads";
 import QuippyChat from "./components/QuippyChat";
 import Discover from "./pages/Discover";
 import Connections from "./pages/Connections";
@@ -234,6 +235,7 @@ const App = () => (
               <Route path="videos" element={<AdminVideos />} />
               <Route path="deep-submissions" element={<AdminDeepSubmissions />} />
               <Route path="marketplace" element={<AdminMarketplace />} />
+              <Route path="whatsapp-leads" element={<AdminWhatsAppLeads />} />
             </Route>
 
             {/* Legacy redirects */}

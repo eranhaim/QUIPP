@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BookOpen, ClipboardList, Film, ShieldCheck, ArrowLeft, LogOut, Store } from 'lucide-react';
+import { BookOpen, ClipboardList, Film, ShieldCheck, ArrowLeft, LogOut, Store, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/admin/videos', label: 'Videos', Icon: Film },
   { to: '/admin/deep-submissions', label: 'DEEP queue', Icon: ShieldCheck },
   { to: '/admin/marketplace', label: 'Marketplace', Icon: Store },
+  { to: '/admin/whatsapp-leads', label: 'WhatsApp leads', Icon: MessageCircle },
 ] as const;
 
 const AdminLayout = () => {
