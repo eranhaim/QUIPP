@@ -1,6 +1,6 @@
 # QUIPP
 
-Professional identity platform for hospitality workers. See [frontend/QUIPP_Build_Prompt_v2.1.md](frontend/QUIPP_Build_Prompt_v2.1.md) for the product spec.
+Professional identity platform for hospitality workers. See [frontend/QUIPP_Build_Prompt_v2.1.md](frontend/QUIPP_Build_Prompt_v2.1.md) for the product spec and [docs/END_USER_INTERACTION_CATALOGUE.md](docs/END_USER_INTERACTION_CATALOGUE.md) for release-ready end-user flows, fallbacks, escalation, and success signals.
 
 ## Repo layout
 
@@ -48,6 +48,35 @@ QUIPP_E2E_URL=http://localhost:8080 npm run e2e:desktop
 
 Screenshots and traces land in `frontend/test-results/`; the HTML report
 lives in `frontend/playwright-report/`.
+
+## Vultr deployment
+
+The production Compose stack serves the web application directly on port `8089`
+and keeps the API internal to the Docker network. It does not modify Caddy or
+require a domain.
+
+1. Clone the repository to `/home/deploy/projects/quipp` and check out the
+   release branch.
+2. Create `/home/deploy/projects/quipp/backend/.env` from
+   `backend/.env.example`. Use a production MongoDB URI, distinct 32+ character
+   JWT secrets, `NODE_ENV=production`, `APP_URL=http://SERVER_IP:8089`, and
+   `CORS_ORIGIN=http://SERVER_IP:8089`. Set `COOKIE_SECURE=false` for direct
+   HTTP only; switch it to `true` only after terminating HTTPS upstream.
+3. Keep optional provider variables blank until their accounts are configured.
+   QUIPPY, Stripe checkout, S3 video operations, email delivery, and WhatsApp
+   each fail closed with a user-facing unavailable state when their respective
+   credentials are absent.
+4. Run:
+
+```sh
+cd /home/deploy/projects/quipp/infra
+docker compose up -d --build
+docker compose ps
+curl -fsS http://127.0.0.1:8089/api/health
+```
+
+The `web` service waits for the API health check before starting. A healthy
+direct deployment is reachable at `http://SERVER_IP:8089`.
 
 ## Milestones
 

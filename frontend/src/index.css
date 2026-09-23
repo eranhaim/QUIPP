@@ -1,3 +1,8 @@
+@import "@fontsource/heebo/400.css";
+@import "@fontsource/heebo/500.css";
+@import "@fontsource/heebo/600.css";
+@import "@fontsource/heebo/700.css";
+@import "@fontsource/heebo/800.css";
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -69,8 +74,8 @@
 
     --spacing: 0.25rem;
 
-    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-display: 'Space Grotesk', 'Heebo', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-sans: 'Inter', 'Heebo', ui-sans-serif, system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -81,11 +86,11 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', 'Heebo', system-ui, -apple-system, sans-serif;
   }
 
   h1, h2, h3 {
-    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    font-family: 'Space Grotesk', 'Heebo', system-ui, -apple-system, sans-serif;
     font-weight: 700;
   }
 }

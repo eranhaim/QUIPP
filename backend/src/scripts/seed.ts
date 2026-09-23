@@ -17,6 +17,8 @@ main()
     logger.error('Seed failed', err);
     try {
       await disconnectDb();
-    } catch {}
+    } catch {
+      // Database initialization can fail before a connection exists.
+    }
     process.exit(1);
   });

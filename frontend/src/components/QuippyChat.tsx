@@ -7,6 +7,13 @@ import { api, ApiError, streamText } from '@/lib/api';
 import type { QuippyMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 
+const STARTER_PROMPTS = [
+  'Our combi oven shows an error. What should I check first?',
+  'Help me compare espresso machines for a busy café.',
+  'Find training for our team on kitchen equipment.',
+  'I need an introduction to another hospitality professional.',
+] as const;
+
 /**
  * Floating equipment consultant. Rendered once at the app root; hides itself
  * on unauthed and admin routes so it doesn't collide with the admin sidebar.
@@ -22,6 +29,7 @@ const QuippyChat = () => {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const streamingAssistantRef = useRef('');
   streamingAssistantRef.current = streamingAssistant;
 
@@ -142,18 +150,40 @@ const QuippyChat = () => {
               )}
               {configured !== false && messages.length === 0 && !streamingAssistant && (
                 <div className="text-sm text-muted-foreground">
-                  <p className="mb-2">Ask me about an error code, a cleaning cycle, or a specific machine.</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>“UNOX combi shows E1, what should I check first?”</li>
-                    <li>“Espresso shots taste sour — is it grind or temp?”</li>
-                  </ul>
+                  <p className="mb-2">I’m QUIPPY, an AI assistant. Start with a real situation.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {STARTER_PROMPTS.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => {
+                          setInput(prompt);
+                          inputRef.current?.focus();
+                        }}
+                        className="rounded-lg border border-border bg-background px-2.5 py-2 text-left text-xs text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               {messages.map((m) => (
                 <Bubble key={m.id} role={m.role} content={m.content} />
               ))}
               {streamingAssistant && <Bubble role="assistant" content={streamingAssistant} pending />}
-              {err && <p className="text-xs text-destructive">{err}</p>}
+              {err && (
+                <div role="alert" className="text-xs text-destructive">
+                  <p>{err}</p>
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.focus()}
+                    className="mt-1 underline underline-offset-2"
+                  >
+                    Edit and retry
+                  </button>
+                </div>
+              )}
             </div>
 
             <form
@@ -168,6 +198,7 @@ const QuippyChat = () => {
               </label>
               <input
                 id="quippy-input"
+                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={busy || configured === false}
