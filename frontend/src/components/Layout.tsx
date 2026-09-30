@@ -1,24 +1,30 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-
-const menuItems = [
-  { label: 'My Passport', href: '/passport/alex' },
-  { label: 'Academy', href: '/academy' },
-  { label: 'Credentials', href: '/passport/alex' },
-  { label: 'About', href: '/' },
-];
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const location = useLocation();
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
+
+  // Auth-aware menu. Signed-out visitors never see links that only work once
+  // authenticated; signed-in visitors get their real Passport, not a demo one.
+  const menuItems = user
+    ? [
+        { label: 'Home', href: '/home' },
+        { label: 'My Passport', href: '/passport/me' },
+        { label: 'Academy', href: '/academy' },
+        { label: 'Settings', href: '/settings' },
+      ]
+    : [
+        { label: 'Academy', href: '/academy' },
+        { label: 'About', href: '/' },
+      ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,13 +34,31 @@ const Layout = ({ children }: LayoutProps) => {
           <Link to="/" className="flex items-center">
             <span className="text-xl font-extrabold font-display text-foreground tracking-tight lowercase">quipp</span>
           </Link>
-          <button
-            onClick={() => setOpen(true)}
-            className="text-foreground"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Auth state, always visible so it is obvious whether you are signed in. */}
+            {user ? (
+              <Link
+                to="/home"
+                className="text-sm font-bold text-foreground hover:text-secondary transition-colors"
+              >
+                Enter app →
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-bold text-foreground hover:text-secondary transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
+            <button
+              onClick={() => setOpen(true)}
+              className="text-foreground"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </nav>
 
