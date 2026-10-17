@@ -1,4 +1,4 @@
-import { Schema, model, type InferSchemaType, type Types } from 'mongoose';
+﻿import { Schema, model, type InferSchemaType, type Types } from 'mongoose';
 
 export const WHATSAPP_COURSE_LEAD_STAGES = [
   'new',
@@ -24,6 +24,7 @@ const whatsAppCourseLeadSchema = new Schema(
       enum: ['goal', 'experience', 'name', 'email', 'complete'],
       default: 'goal',
     },
+    language: { type: String, enum: ['en', 'he'], default: 'en' },
     courseSlug: { type: String, default: null, trim: true, index: true },
     learningGoal: { type: String, default: null, trim: true, maxlength: 500 },
     experience: { type: String, default: null, trim: true, maxlength: 500 },
