@@ -1,5 +1,7 @@
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatAnthropic } from '@langchain/anthropic';
+import { ChatOpenAI } from '@langchain/openai';
 import { END, START, StateGraph } from '@langchain/langgraph';
 import { MongoDBSaver } from '@langchain/langgraph-checkpoint-mongodb';
 import mongoose from 'mongoose';
@@ -57,20 +59,33 @@ const routeSchema = z.object({
   }),
 });
 
-let modelInstance: ChatAnthropic | null = null;
-function model(): ChatAnthropic {
-  if (!env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY is required for QUIPPY');
-  }
-  if (!modelInstance) {
+let modelInstance: BaseChatModel | null = null;
+function model(): BaseChatModel {
+  if (modelInstance) return modelInstance;
+  if (env.ANTHROPIC_API_KEY) {
     modelInstance = new ChatAnthropic({
       apiKey: env.ANTHROPIC_API_KEY,
       model: env.ANTHROPIC_MODEL,
       maxTokens: 1200,
       temperature: 0.2,
     });
+    return modelInstance;
   }
-  return modelInstance;
+  if (env.OPENAI_API_KEY) {
+    modelInstance = new ChatOpenAI({
+      apiKey: env.OPENAI_API_KEY,
+      model: env.OPENAI_MODEL,
+      maxTokens: 1200,
+      temperature: 0.2,
+    });
+    return modelInstance;
+  }
+  throw new Error('ANTHROPIC_API_KEY or OPENAI_API_KEY is required for QUIPPY');
+}
+
+function activeModelName(): string {
+  if (env.ANTHROPIC_API_KEY) return env.ANTHROPIC_MODEL;
+  return env.OPENAI_MODEL;
 }
 
 type UsageMessage = {
@@ -83,11 +98,10 @@ type UsageMessage = {
 
 function usageFromMessage(message: UsageMessage): ModelUsage {
   return {
-    model: env.ANTHROPIC_MODEL,
+    model: activeModelName(),
     inputTokens: message.usage_metadata?.input_tokens ?? null,
     outputTokens: message.usage_metadata?.output_tokens ?? null,
     totalTokens: message.usage_metadata?.total_tokens ?? null,
-    // Pricing is not stable or discoverable for arbitrary configured model IDs.
     estimatedCostUsd: null,
   };
 }

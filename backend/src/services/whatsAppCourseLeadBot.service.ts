@@ -19,56 +19,56 @@ type PersistedCourseLead = WhatsAppCourseLeadDoc & {
   save(): Promise<unknown>;
 };
 
-// Reply copy is plain text, one entry per language.
+// QUIPPY voice: "we" language, kitchen partner tone. Plain text, one entry per language.
 const COPY = {
   noCourses: {
-    en: 'I could not find a matching published course yet. Tell me what you want to learn, or reply HUMAN to speak with the QUIPP team.',
-    he: 'עוד לא מצאתי קורס מתאים. ספרו לי מה תרצו ללמוד, או כתבו "נציג" כדי לדבר עם צוות QUIPP.',
+    en: 'I could not find a matching published course yet. Tell me what we should focus on, or reply HUMAN to speak with the QUIPP team.',
+    he: '\u05e2\u05d5\u05d3 \u05dc\u05d0 \u05de\u05e6\u05d0\u05ea\u05d9 \u05e7\u05d5\u05e8\u05e1 \u05de\u05ea\u05d0\u05d9\u05dd. \u05e1\u05e4\u05e8\u05d5 \u05dc\u05d9 \u05de\u05d4 \u05ea\u05e8\u05e6\u05d5 \u05dc\u05dc\u05de\u05d5\u05d3, \u05d0\u05d5 \u05db\u05ea\u05d1\u05d5 "\u05e0\u05e6\u05d9\u05d2" \u05db\u05d3\u05d9 \u05dc\u05d3\u05d1\u05e8 \u05e2\u05dd \u05e6\u05d5\u05d5\u05ea QUIPP.',
   },
   coursesIntro: {
     en: 'Here are relevant QUIPP courses:',
-    he: 'הנה קורסים רלוונטיים ב-QUIPP:',
+    he: '\u05d4\u05e0\u05d4 \u05e7\u05d5\u05e8\u05e1\u05d9\u05dd \u05e8\u05dc\u05d5\u05d5\u05e0\u05d8\u05d9\u05d9\u05dd \u05d1-QUIPP:',
   },
   coursesOutro: {
-    en: 'Reply with a course name, or tell me what you want to learn.',
-    he: 'כתבו שם של קורס, או ספרו לי מה תרצו ללמוד.',
+    en: 'Reply with a course name, or tell me what we should work on.',
+    he: '\u05db\u05ea\u05d1\u05d5 \u05e9\u05dd \u05e9\u05dc \u05e7\u05d5\u05e8\u05e1, \u05d0\u05d5 \u05e1\u05e4\u05e8\u05d5 \u05dc\u05d9 \u05de\u05d4 \u05ea\u05e8\u05e6\u05d5 \u05dc\u05dc\u05de\u05d5\u05d3.',
   },
-  minutes: { en: 'min', he: 'דק׳' },
+  minutes: { en: 'min', he: '\u05d3\u05e7\u05f3' },
   goal: {
-    en: 'What skill or equipment do you want to learn about?',
-    he: 'איזו מיומנות או איזה ציוד תרצו ללמוד?',
+    en: 'What skill or equipment are we looking at together?',
+    he: '\u05d0\u05d9\u05d6\u05d5 \u05de\u05d9\u05d5\u05de\u05e0\u05d5\u05ea \u05d0\u05d5 \u05d0\u05d9\u05d6\u05d4 \u05e6\u05d9\u05d5\u05d3 \u05ea\u05e8\u05e6\u05d5 \u05dc\u05dc\u05de\u05d5\u05d3?',
   },
   experience: {
-    en: 'What is your current experience level: new, some experience, or advanced?',
-    he: 'מה רמת הניסיון שלכם: מתחילים, קצת ניסיון, או מתקדמים?',
+    en: 'Where are we starting from \u2014 new to this, some experience, or been at it a while?',
+    he: '\u05de\u05d4 \u05e8\u05de\u05ea \u05d4\u05e0\u05d9\u05e1\u05d9\u05d5\u05df \u05e9\u05dc\u05db\u05dd: \u05de\u05ea\u05d7\u05d9\u05dc\u05d9\u05dd, \u05e7\u05e6\u05ea \u05e0\u05d9\u05e1\u05d9\u05d5\u05df, \u05d0\u05d5 \u05de\u05ea\u05e7\u05d3\u05de\u05d9\u05dd?',
   },
   name: {
-    en: 'What name should the QUIPP team use when they follow up?',
-    he: 'באיזה שם צוות QUIPP יפנה אליכם?',
+    en: 'What name should the QUIPP team use when we follow up?',
+    he: '\u05d1\u05d0\u05d9\u05d6\u05d4 \u05e9\u05dd \u05e6\u05d5\u05d5\u05ea QUIPP \u05d9\u05e4\u05e0\u05d4 \u05d0\u05dc\u05d9\u05db\u05dd?',
   },
   email: {
-    en: 'What email should the QUIPP team use to send course details?',
-    he: 'לאיזו כתובת מייל צוות QUIPP ישלח את פרטי הקורס?',
+    en: 'What email works for us to send course details?',
+    he: '\u05dc\u05d0\u05d9\u05d6\u05d5 \u05db\u05ea\u05d5\u05d1\u05ea \u05de\u05d9\u05d9\u05dc \u05e6\u05d5\u05d5\u05ea QUIPP \u05d9\u05e9\u05dc\u05d7 \u05d0\u05ea \u05e4\u05e8\u05d8\u05d9 \u05d4\u05e7\u05d5\u05e8\u05e1?',
   },
   complete: {
-    en: 'Thanks. A QUIPP team member will follow up with relevant course options.',
-    he: 'תודה. אחד מצוות QUIPP יחזור אליכם עם אפשרויות קורס מתאימות.',
+    en: 'We are all set. A QUIPP team member will follow up with the right course options for you. Looking forward to building this together.',
+    he: '\u05d4\u05db\u05dc \u05de\u05e1\u05d5\u05d3\u05e8. \u05d0\u05d7\u05d3 \u05de\u05e6\u05d5\u05d5\u05ea QUIPP \u05d9\u05d7\u05d6\u05d5\u05e8 \u05d0\u05dc\u05d9\u05db\u05dd \u05e2\u05dd \u05d0\u05e4\u05e9\u05e8\u05d5\u05d9\u05d5\u05ea \u05e7\u05d5\u05e8\u05e1 \u05de\u05ea\u05d0\u05d9\u05de\u05d5\u05ea.',
   },
   invalidEmail: {
-    en: 'Please send a valid email address, or reply HUMAN if you prefer a person to contact you another way.',
-    he: 'אנא שלחו כתובת מייל תקינה, או כתבו "נציג" אם עדיף שנציג ייצור קשר בדרך אחרת.',
+    en: 'Please send a valid email address, or reply HUMAN if you prefer we have a person reach out another way.',
+    he: '\u05d0\u05e0\u05d0 \u05e9\u05dc\u05d7\u05d5 \u05db\u05ea\u05d5\u05d1\u05ea \u05de\u05d9\u05d9\u05dc \u05ea\u05e7\u05d9\u05e0\u05d4, \u05d0\u05d5 \u05db\u05ea\u05d1\u05d5 "\u05e0\u05e6\u05d9\u05d2" \u05d0\u05dd \u05e2\u05d3\u05d9\u05e3 \u05e9\u05e0\u05e6\u05d9\u05d2 \u05d9\u05d9\u05e6\u05d5\u05e8 \u05e7\u05e9\u05e8 \u05d1\u05d3\u05e8\u05da \u05d0\u05d7\u05e8\u05ea.',
   },
   humanRequested: {
-    en: 'I have marked this for a QUIPP team member. They will follow up using the contact details you provide here. You can also tell me which course or skill you are interested in.',
-    he: 'סימנתי את הפנייה לצוות QUIPP. הם יחזרו אליכם בפרטי הקשר שתשאירו כאן. אפשר גם לספר לי באיזה קורס או מיומנות אתם מעוניינים.',
+    en: 'I have flagged this for a QUIPP team member. We will follow up using the contact details you share here. In the meantime, tell me what skill or equipment you are interested in \u2014 we can start looking at options together.',
+    he: '\u05e1\u05d9\u05de\u05e0\u05ea\u05d9 \u05d0\u05ea \u05d4\u05e4\u05e0\u05d9\u05d9\u05d4 \u05dc\u05e6\u05d5\u05d5\u05ea QUIPP. \u05d4\u05dd \u05d9\u05d7\u05d6\u05e8\u05d5 \u05d0\u05dc\u05d9\u05db\u05dd \u05d1\u05e4\u05e8\u05d8\u05d9 \u05d4\u05e7\u05e9\u05e8 \u05e9\u05ea\u05e9\u05d0\u05d9\u05e8\u05d5 \u05db\u05d0\u05df. \u05d0\u05e4\u05e9\u05e8 \u05d2\u05dd \u05dc\u05e1\u05e4\u05e8 \u05dc\u05d9 \u05d1\u05d0\u05d9\u05d6\u05d4 \u05e7\u05d5\u05e8\u05e1 \u05d0\u05d5 \u05de\u05d9\u05d5\u05de\u05e0\u05d5\u05ea \u05d0\u05ea\u05dd \u05de\u05e2\u05d5\u05e0\u05d9\u05d9\u05e0\u05d9\u05dd.',
   },
   alreadyWithTeam: {
-    en: 'Your request is with the QUIPP team. Reply COURSES to see current options, or HUMAN to request a person.',
-    he: 'הפנייה שלכם אצל צוות QUIPP. כתבו "קורסים" כדי לראות אפשרויות, או "נציג" כדי לבקש שיחה עם אדם.',
+    en: 'We have got your details with the QUIPP team. Reply COURSES to explore current options, or HUMAN to connect with a person.',
+    he: '\u05d4\u05e4\u05e0\u05d9\u05d9\u05d4 \u05e9\u05dc\u05db\u05dd \u05d0\u05e6\u05dc \u05e6\u05d5\u05d5\u05ea QUIPP. \u05db\u05ea\u05d1\u05d5 "\u05e7\u05d5\u05e8\u05e1\u05d9\u05dd" \u05db\u05d3\u05d9 \u05dc\u05e8\u05d0\u05d5\u05ea \u05d0\u05e4\u05e9\u05e8\u05d5\u05d9\u05d5\u05ea, \u05d0\u05d5 "\u05e0\u05e6\u05d9\u05d2" \u05db\u05d3\u05d9 \u05dc\u05d1\u05e7\u05e9 \u05e9\u05d9\u05d7\u05d4 \u05e2\u05dd \u05d0\u05d3\u05dd.',
   },
   greeting: {
-    en: 'Hi, I am QUIPP’s course assistant. I can help you discover training, answer course questions, and connect you with the QUIPP team. What skill or equipment do you want to learn about?',
-    he: 'היי, אני העוזר של QUIPP לקורסים. אפשר לעזור לכם למצוא הכשרה, לענות על שאלות על קורסים ולחבר אתכם לצוות QUIPP. איזו מיומנות או איזה ציוד תרצו ללמוד?',
+    en: 'Good to meet you. I am QUIPPY, your kitchen partner at QUIPP. I can help us find the right training, answer equipment questions, and connect you with the team. What skill or equipment are we looking at?',
+    he: '\u05e0\u05e2\u05d9\u05dd \u05dc\u05d4\u05db\u05d9\u05e8. \u05d0\u05e0\u05d9 QUIPPY, \u05d4\u05e9\u05d5\u05ea\u05e3 \u05e9\u05dc\u05db\u05dd \u05d1\u05de\u05d8\u05d1\u05d7 \u05de\u05d1\u05d9\u05ea QUIPP. \u05d0\u05e4\u05e9\u05e8 \u05dc\u05e2\u05d6\u05d5\u05e8 \u05dc\u05db\u05dd \u05dc\u05de\u05e6\u05d5\u05d0 \u05d4\u05db\u05e9\u05e8\u05d4, \u05dc\u05e2\u05e0\u05d5\u05ea \u05e2\u05dc \u05e9\u05d0\u05dc\u05d5\u05ea \u05e2\u05dc \u05e6\u05d9\u05d5\u05d3, \u05d5\u05dc\u05d7\u05d1\u05e8 \u05d0\u05ea\u05db\u05dd \u05dc\u05e6\u05d5\u05d5\u05ea. \u05d0\u05d9\u05d6\u05d5 \u05de\u05d9\u05d5\u05de\u05e0\u05d5\u05ea \u05d0\u05d5 \u05d0\u05d9\u05d6\u05d4 \u05e6\u05d9\u05d5\u05d3 \u05ea\u05e8\u05e6\u05d5 \u05dc\u05dc\u05de\u05d5\u05d3?',
   },
 } as const;
 
@@ -80,7 +80,6 @@ export function isWhatsAppCourseLeadEmail(text: string): boolean {
   return EMAIL_PATTERN.test(text);
 }
 
-// Hebrew letters win. Emails and one-word answers keep the language already stored.
 export function detectLanguage(text: string, current: Language): Language {
   if (HEBREW_LETTER.test(text)) return 'he';
   if (LATIN_WORD.test(text) && !EMAIL_PATTERN.test(text)) return 'en';
@@ -92,8 +91,8 @@ function courseSummary(
   language: Language,
 ) {
   const description = course.description.trim();
-  const suffix = description ? ` — ${description.slice(0, 110)}` : '';
-  return `• ${course.title} (${course.duration} ${COPY.minutes[language]})${suffix}\n${course.slug}`;
+  const suffix = description ? ` \u2014 ${description.slice(0, 110)}` : '';
+  return `\u2022 ${course.title} (${course.duration} ${COPY.minutes[language]})${suffix}\n${course.slug}`;
 }
 
 async function findCourses(query?: string) {

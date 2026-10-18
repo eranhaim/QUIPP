@@ -107,13 +107,13 @@ const Passport = () => {
 
   return (
     <AuthAwareShell>
-      <section className="py-12 md:py-20" style={{ background: '#36186b' }}>
+      <section className="py-16 md:py-24" style={{ background: '#00182E' }}>
         <motion.div {...fade()} className="max-w-[680px] mx-auto px-5 text-center">
           <InitialsAvatar
             firstName={profile.firstName ?? profile.username[0]}
             lastName={profile.lastName ?? ''}
             size={80}
-            className="mx-auto mb-4"
+            className="mx-auto mb-5 ring-2 ring-[#d1f300] ring-offset-4 ring-offset-[#00182E] rounded-full"
           />
 
           <h1 className="text-3xl md:text-5xl font-extrabold font-display text-white mb-1 tracking-tight uppercase">
@@ -213,7 +213,7 @@ const Passport = () => {
         </section>
       )}
 
-      <section className="py-16" style={{ background: '#221f20' }}>
+      <section className="py-16" style={{ background: '#00182E' }}>
         <motion.div {...fade(0.3)} className="max-w-[680px] mx-auto px-5 text-center">
           <h2 className="text-3xl md:text-[48px] font-extrabold font-display text-white mb-3 tracking-tight leading-[1.1]">
             Permanently yours.
@@ -241,7 +241,7 @@ const Passport = () => {
             variant="outline"
             onClick={copyLink}
             style={{
-              background: '#221f20',
+              background: '#00182E',
               color: '#fff',
               borderColor: 'rgba(255,255,255,0.3)',
             }}

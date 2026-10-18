@@ -126,7 +126,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main>{children}</main>
 
       {/* Footer */}
-      <footer style={{ background: '#221f20' }}>
+      <footer style={{ background: '#00182E' }}>
         <div className="max-w-[1200px] mx-auto px-5 py-16 text-center">
           <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-2">
             GET <span className="text-primary">QUIPP'D</span>

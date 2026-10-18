@@ -44,7 +44,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   return (
     <aside
       className="flex h-full w-full flex-col text-white"
-      style={{ background: '#1d123c' }}
+      style={{ background: '#001424' }}
       aria-label="Primary"
     >
       <div className="px-6 pt-7 pb-4">
@@ -85,9 +85,9 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             className={({ isActive }) =>
               [
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#1d123c]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#001424]',
                 isActive
-                  ? 'bg-primary text-[#1d123c] font-semibold'
+                  ? 'bg-primary text-[#00182E] font-semibold'
                   : 'text-white/70 hover:bg-white/5 hover:text-white',
               ].join(' ')
             }
@@ -103,7 +103,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             className={({ isActive }) =>
               [
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive ? 'bg-primary text-[#1d123c] font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white',
+                isActive ? 'bg-primary text-[#00182E] font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white',
               ].join(' ')
             }
           >
@@ -119,9 +119,9 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             className={({ isActive }) =>
               [
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#1d123c]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#001424]',
                 isActive
-                  ? 'bg-primary text-[#1d123c] font-semibold'
+                  ? 'bg-primary text-[#00182E] font-semibold'
                   : 'text-white/70 hover:bg-white/5 hover:text-white',
               ].join(' ')
             }

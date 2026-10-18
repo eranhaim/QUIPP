@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { api, ApiError, streamText } from '@/lib/api';
@@ -8,15 +8,35 @@ import type { QuippyMessage } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 
 const STARTER_PROMPTS = [
-  'Our combi oven shows an error. What should I check first?',
-  'Help me compare espresso machines for a busy café.',
-  'Find training for our team on kitchen equipment.',
-  'I need an introduction to another hospitality professional.',
+  'We have a combi oven error. What should we check first?',
+  'Help us compare espresso machines for a busy café.',
+  'Let us find training for the team on kitchen equipment.',
+  'We need an introduction to another hospitality professional.',
 ] as const;
 
+type QuippyMood = 'neutral' | 'thinking' | 'happy' | 'concerned' | 'excited';
+
+const MOOD_EMOJI: Record<QuippyMood, string> = {
+  neutral: '😊',
+  thinking: '🤔',
+  happy: '😄',
+  concerned: '😟',
+  excited: '🤩',
+};
+
+function inferMood(text: string, busy: boolean): QuippyMood {
+  if (busy) return 'thinking';
+  if (!text) return 'neutral';
+  const lower = text.toLowerCase();
+  if (/error|broken|fail|issue|problem|danger|safety/i.test(lower)) return 'concerned';
+  if (/great|congrat|well done|earned|completed|nice/i.test(lower)) return 'excited';
+  if (/course|training|learn|credential/i.test(lower)) return 'happy';
+  return 'neutral';
+}
+
 /**
- * Floating equipment consultant. Rendered once at the app root; hides itself
- * on unauthed and admin routes so it doesn't collide with the admin sidebar.
+ * QUIPPY kitchen partner chat widget. Rendered once at the app root.
+ * Hidden on unauthenticated and admin routes.
  */
 const QuippyChat = () => {
   const { user } = useAuth();
@@ -32,6 +52,9 @@ const QuippyChat = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const streamingAssistantRef = useRef('');
   streamingAssistantRef.current = streamingAssistant;
+
+  const lastAssistantText = [...messages].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+  const mood = inferMood(streamingAssistant || lastAssistantText, busy);
 
   const hideOn =
     !user ||
@@ -107,14 +130,22 @@ const QuippyChat = () => {
 
   return (
     <>
+      {/* ── FAB with mood ── */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label="Open QUIPPY equipment consultant"
-        className="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-secondary text-secondary-foreground shadow-lg hover:opacity-90 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        aria-label="Open QUIPPY kitchen partner"
+        className="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-secondary text-secondary-foreground shadow-lg hover:opacity-90 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-transform"
+        style={{ transform: open ? 'scale(0.9)' : 'scale(1)' }}
       >
-        {open ? <X className="w-5 h-5" aria-hidden /> : <MessageCircle className="w-5 h-5" aria-hidden />}
+        {open ? (
+          <X className="w-5 h-5" aria-hidden />
+        ) : (
+          <span className="text-xl" role="img" aria-label={`QUIPPY is ${mood}`}>
+            {MOOD_EMOJI[mood]}
+          </span>
+        )}
       </button>
 
       <AnimatePresence>
@@ -124,24 +155,31 @@ const QuippyChat = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             role="dialog"
-            aria-label="QUIPPY equipment consultant"
+            aria-label="QUIPPY kitchen partner"
             className="fixed bottom-24 right-5 z-40 w-[min(400px,calc(100vw-32px))] h-[min(560px,calc(100vh-140px))] bg-card rounded-2xl shadow-2xl border border-border flex flex-col overflow-hidden"
           >
-            <header className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold font-display text-card-foreground">QUIPPY</p>
-                <p className="text-[11px] text-muted-foreground">Equipment consultant · private</p>
+            {/* ── Header with mood ── */}
+            <header className="px-4 py-3 border-b border-border flex items-center justify-between" style={{ background: '#00182E' }}>
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg" role="img" aria-label={`QUIPPY is ${mood}`}>
+                  {MOOD_EMOJI[mood]}
+                </span>
+                <div>
+                  <p className="text-sm font-bold font-display text-white">QUIPPY</p>
+                  <p className="text-[10px] text-white/60">Kitchen partner · private</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close QUIPPY"
-                className="p-1 rounded hover:bg-muted"
+                className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white"
               >
                 <X className="w-4 h-4" aria-hidden />
               </button>
             </header>
 
+            {/* ── Messages ── */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {configured === false && (
                 <p className="text-sm text-muted-foreground">
@@ -150,8 +188,10 @@ const QuippyChat = () => {
               )}
               {configured !== false && messages.length === 0 && !streamingAssistant && (
                 <div className="text-sm text-muted-foreground">
-                  <p className="mb-2">I’m QUIPPY, an AI assistant. Start with a real situation.</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="mb-3">
+                    I am QUIPPY, your kitchen partner. Start with a real situation — we will sort it together.
+                  </p>
+                  <div className="flex flex-col gap-2">
                     {STARTER_PROMPTS.map((prompt) => (
                       <button
                         key={prompt}
@@ -160,7 +200,7 @@ const QuippyChat = () => {
                           setInput(prompt);
                           inputRef.current?.focus();
                         }}
-                        className="rounded-lg border border-border bg-background px-2.5 py-2 text-left text-xs text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="rounded-xl border border-border bg-background px-3 py-2.5 text-left text-xs text-foreground hover:bg-muted hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
                       >
                         {prompt}
                       </button>
@@ -186,6 +226,7 @@ const QuippyChat = () => {
               )}
             </div>
 
+            {/* ── Input ── */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -202,7 +243,7 @@ const QuippyChat = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={busy || configured === false}
-                placeholder={configured === false ? 'QUIPPY offline' : 'Ask about an error code…'}
+                placeholder={configured === false ? 'QUIPPY offline' : 'What are we working on?'}
                 className="flex-1 h-10 px-4 rounded-full border-2 border-border bg-background text-sm focus:outline-none focus:border-primary disabled:opacity-60"
               />
               <Button
@@ -233,7 +274,7 @@ const Bubble = ({
 }) =>
   role === 'user' ? (
     <div className="flex justify-end">
-      <div className="max-w-[85%] bg-secondary text-secondary-foreground rounded-2xl rounded-br-md px-4 py-2 text-sm whitespace-pre-wrap">
+      <div className="max-w-[85%] rounded-2xl rounded-br-md px-4 py-2 text-sm whitespace-pre-wrap text-white" style={{ background: '#00182E' }}>
         {content}
       </div>
     </div>

@@ -10,11 +10,11 @@
 
 @layer base {
   :root {
-    /* ── QUIPP Issue 05 — 4 Colours Only ── */
+    /* ── QUIPP Brand — Midnight Navy + Lime ── */
     --color-white: 0 0% 100%;            /* #ffffff */
     --color-almost-black: 15 5% 13%;     /* #221f20 */
     --color-lime: 73 100% 48%;           /* #d1f300 */
-    --color-purple: 263 60% 26%;         /* #36186b */
+    --color-navy: 210 100% 9%;           /* #00182E */
 
     /* ── Semantic Tokens ── */
     --background: var(--color-white);
@@ -29,7 +29,7 @@
     --primary: var(--color-lime);
     --primary-foreground: var(--color-almost-black);
 
-    --secondary: var(--color-purple);
+    --secondary: var(--color-navy);
     --secondary-foreground: var(--color-white);
 
     --muted: 0 0% 96%;
@@ -52,13 +52,13 @@
     --sidebar-foreground: var(--color-white);
     --sidebar-primary: var(--color-lime);
     --sidebar-primary-foreground: var(--color-almost-black);
-    --sidebar-accent: var(--color-purple);
+    --sidebar-accent: var(--color-navy);
     --sidebar-accent-foreground: var(--color-white);
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: var(--color-lime);
 
     --chart-1: var(--color-lime);
-    --chart-2: var(--color-purple);
+    --chart-2: var(--color-navy);
     --chart-3: 220 100% 50%;
     --chart-4: 263 84% 58%;
     --chart-5: 0 84% 60%;

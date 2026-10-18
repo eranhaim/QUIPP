@@ -15,7 +15,7 @@ const InitialsAvatar = ({ firstName, lastName, size = 80, className = '' }: Init
           width: size,
           height: size,
           fontSize: size * 0.4,
-          background: '#36186b',
+          background: '#00182E',
           color: '#d1f300',
         }}
       >

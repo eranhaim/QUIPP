@@ -19,7 +19,7 @@ const TAG_ICON: Record<TagName, string> = {
 
 const patchStyles: Record<Tier, { bg: string; text: string; border?: string }> = {
   IN: { bg: '#ffffff', text: '#221f20', border: '2px solid #221f20' },
-  DEEP: { bg: '#36186b', text: '#ffffff' },
+  DEEP: { bg: '#00182E', text: '#ffffff' },
   THERE: { bg: '#d1f300', text: '#221f20' },
 };
 

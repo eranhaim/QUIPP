@@ -14,7 +14,7 @@ import { HttpError } from '../middleware/errorHandler.js';
 import { logger } from '../lib/logger.js';
 
 export function isQuippyConfigured(): boolean {
-  return Boolean(env.ANTHROPIC_API_KEY);
+  return Boolean(env.ANTHROPIC_API_KEY || env.OPENAI_API_KEY);
 }
 
 async function getOrCreateConversation(input: {

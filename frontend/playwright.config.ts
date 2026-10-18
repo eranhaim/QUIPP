@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.QUIPP_E2E_URL ?? 'http://54.173.144.0:8090';
+const BASE_URL = process.env.QUIPP_E2E_URL ?? 'https://quipp.64.176.175.97.nip.io';
 
 export default defineConfig({
   testDir: './e2e',
@@ -28,6 +28,10 @@ export default defineConfig({
     {
       name: 'mobile-pixel',
       use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'mobile-iphone',
+      use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
     },
   ],
 });

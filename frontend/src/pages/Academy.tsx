@@ -8,7 +8,7 @@ import type { Course, Enrollment, TagName, TechTag, Tier } from '@/lib/types';
 
 const TIER_STYLES: Record<Tier, { bg: string; color: string }> = {
   IN: { bg: '#221f20', color: '#ffffff' },
-  DEEP: { bg: '#36186b', color: '#ffffff' },
+  DEEP: { bg: '#00182E', color: '#ffffff' },
   THERE: { bg: '#d1f300', color: '#221f20' },
 };
 
@@ -49,7 +49,7 @@ const Academy = () => {
 
   return (
     <AppShell>
-      <section className="py-14 md:py-20" style={{ background: '#36186b' }}>
+      <section className="py-14 md:py-20" style={{ background: '#00182E' }}>
         <div className="max-w-[1000px] mx-auto px-5 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3">
             The academy
@@ -184,7 +184,7 @@ const CourseCard = ({ course, enrollment }: CourseCardProps) => {
           {course.tier}
         </span>
         {isDone && (
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-primary text-[#1d123c]">
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-primary text-[#00182E]">
             <CheckCircle2 className="h-3 w-3" aria-hidden />
             Earned
           </span>

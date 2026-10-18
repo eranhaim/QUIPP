@@ -38,8 +38,8 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* ──── HERO (purple section) ──── */}
-      <section style={{ background: '#36186b' }} className="pt-28 md:pt-44 pb-32 md:pb-44 -mt-[1px]">
+      {/* ──── HERO ──── */}
+      <section style={{ background: '#00182E' }} className="pt-28 md:pt-44 pb-32 md:pb-44 -mt-[1px]">
         <motion.div {...fade()} className="max-w-[1000px] mx-auto px-5 text-center">
           <h1 className="text-5xl md:text-[88px] lg:text-[104px] font-extrabold font-display text-white leading-[0.95] mb-8 tracking-tight uppercase">
             THE APP FOR{' '}

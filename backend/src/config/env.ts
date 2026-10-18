@@ -55,10 +55,14 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-20250514'),
 
+  // OpenAI — fallback when Anthropic is not configured.
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+
   // GreenAPI — optional at boot. The worker only starts when enabled and fully configured.
   GREEN_API_ID_INSTANCE: optionalNonEmptyString,
   GREEN_API_TOKEN_INSTANCE: optionalNonEmptyString,
-  GREEN_API_API_URL: z.string().url().default('https://api.green-api.com'),
+  GREEN_API_API_URL: z.string().url().default('https://7103.api.greenapi.com'),
   GREEN_API_WEBHOOK_TOKEN: optionalNonEmptyString,
   GREEN_API_ENABLED: optionalBoolean,
   // Enables the unauthenticated course-lead flow for the configured QUIPP GreenAPI instance.
